@@ -51,10 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!motionQuery.matches) {
     initGlassMotion();
   }
-  const nav = document.querySelector(".site-nav");
-  if (nav) {
-    requestAnimationFrame(() => nav.classList.add("is-ready"));
-  }
   window.addEventListener("resize", () => {
     if (activeNavLink) {
       updateNavIndicator(activeNavLink);

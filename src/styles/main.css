@@ -70,19 +70,12 @@ main {
   position: fixed;
   top: 1.5rem;
   left: 50%;
-  transform: translate(-50%, -1rem);
+  transform: translate(-50%, 0);
   width: min(1100px, calc(100% - 2rem));
   z-index: 10;
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.45);
-  opacity: 0;
-  transition: opacity 0.6s ease, transform 0.6s ease, padding 0.35s ease, background 0.35s ease,
-    border-color 0.35s ease, box-shadow 0.35s ease;
+  transition: padding 0.35s ease, background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
   background: linear-gradient(120deg, rgba(4, 7, 18, 0.94), rgba(9, 14, 30, 0.94));
-}
-
-.site-nav.is-ready {
-  opacity: 1;
-  transform: translate(-50%, 0);
 }
 
 .site-nav.is-scrolled {
