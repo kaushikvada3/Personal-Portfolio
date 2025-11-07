@@ -1,0 +1,375 @@
+import profile from "../data/profile.js";
+
+const qs = (sel) => document.querySelector(sel);
+const qsa = (sel) => [...document.querySelectorAll(sel)];
+
+const metricsEl = qs("#liveMetrics");
+const experienceEl = qs("#experience");
+const projectsEl = qs("#projects");
+const educationEl = qs("#educationCard");
+const skillOrbitEl = qs("#skillOrbit");
+const heroTitle = qs("#heroTitle");
+const navLinks = qsa("[data-nav]");
+const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+const orbitChips = [];
+let orbitAnimationId = null;
+let parallaxCleanup = null;
+let orbitGlowBound = false;
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderMetrics();
+  renderExperience();
+  renderProjects();
+  renderEducation();
+  renderSkillOrbit();
+  initHeroAnimation();
+  initLenis();
+  initNav();
+  initReveal();
+  initParallax();
+});
+
+const handleMotionPreference = (event) => {
+  if (event.matches) {
+    stopOrbitAnimation();
+    if (parallaxCleanup) {
+      parallaxCleanup();
+    }
+  } else {
+    if (orbitChips.length) {
+      startOrbitAnimation();
+    }
+    initParallax();
+  }
+};
+
+if (motionQuery.addEventListener) {
+  motionQuery.addEventListener("change", handleMotionPreference);
+} else if (motionQuery.addListener) {
+  motionQuery.addListener(handleMotionPreference);
+}
+
+function renderMetrics() {
+  metricsEl.innerHTML = profile.metrics
+    .map(
+      (metric) => `
+        <div class="metric">
+          <h3>${metric.value}</h3>
+          <p>${metric.label}</p>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function renderExperience() {
+  const cards = profile.experience
+    .map(
+      (exp) => `
+      <article class="band timeline-card reveal">
+        <header>
+          <div>
+            <p class="eyebrow">${exp.company}</p>
+            <h3>${exp.role}</h3>
+          </div>
+          <div class="meta">
+            <p>${exp.location}</p>
+            <p>${exp.timeline}</p>
+          </div>
+        </header>
+        <p>${exp.focus}</p>
+        <ul>
+          ${exp.bullets.map((bullet) => `<li>${bullet}</li>`).join("")}
+        </ul>
+      </article>
+    `,
+    )
+    .join("");
+  experienceEl.innerHTML = `
+    <header>
+      <p class="eyebrow">Experience</p>
+      <h2>Hands-on industry and lab impact.</h2>
+    </header>
+    <div class="timeline">
+      ${cards}
+    </div>
+  `;
+}
+
+function renderProjects() {
+  const projectCards = profile.projects
+    .map(
+      (proj) => `
+      <article class="glass-panel stack reveal">
+        <div>
+          <p class="eyebrow">Project</p>
+          <h3>${proj.name}</h3>
+          <p class="meta">${proj.timeline}</p>
+        </div>
+        <p>${proj.description}</p>
+        <ul class="details">
+          ${proj.highlights.map((item) => `<li>${item}</li>`).join("")}
+        </ul>
+      </article>
+    `,
+    )
+    .join("");
+
+  projectsEl.innerHTML = `
+    <header class="full-span">
+      <p class="eyebrow">Projects</p>
+      <h2>Selected builds and prototypes.</h2>
+    </header>
+    ${projectCards}
+  `;
+}
+
+function renderEducation() {
+  const { education } = profile;
+  if (!educationEl) return;
+  const location =
+    (profile.contact && profile.contact.location) || education.location || "Riverside, CA";
+  educationEl.innerHTML = `
+    <h3>${education.school}</h3>
+    <p>${education.degree}</p>
+    <div class="education-meta">
+      <span>GPA ${education.gpa}</span>
+      <span>${location}</span>
+    </div>
+    <p>${profile.summary}</p>
+    <div class="coursework-grid">
+      ${education.coursework.map((course) => `<span class="course-chip">${course}</span>`).join("")}
+    </div>
+  `;
+}
+
+function renderSkillOrbit() {
+  if (!skillOrbitEl) return;
+  stopOrbitAnimation();
+  skillOrbitEl.innerHTML = "";
+  orbitChips.length = 0;
+  const entries = Object.entries(profile.skills);
+  const baseRadius = 120;
+  const radiusStep = 55;
+
+  const core = document.createElement("div");
+  core.className = "orbit-core";
+  core.innerHTML = "<span>Core</span><span>RTL</span>";
+  skillOrbitEl.appendChild(core);
+
+  entries.forEach(([category, skills], index) => {
+    const radius = baseRadius + index * radiusStep;
+    const direction = index % 2 === 0 ? 1 : -1;
+    const arc = Math.PI * (1.35 - index * 0.08);
+    const startAngle = -Math.PI / 2 + index * 0.25;
+    const ring = document.createElement("div");
+    ring.className = "orbit-ring";
+    ring.style.width = `${radius * 2}px`;
+    ring.style.height = `${radius * 2}px`;
+    ring.dataset.label = category;
+    skillOrbitEl.appendChild(ring);
+
+    skills.forEach((skill, skillIndex) => {
+      const divisor = Math.max(skills.length - 1, 1);
+      const angle = startAngle + (skillIndex / divisor) * arc;
+      const chip = document.createElement("span");
+      chip.className = "orbit-chip";
+      chip.textContent = skill;
+      const x = radius * Math.cos(angle);
+      const y = radius * Math.sin(angle);
+      chip.style.setProperty("--orbit-x", `${x}px`);
+      chip.style.setProperty("--orbit-y", `${y}px`);
+      chip.style.top = "50%";
+      chip.style.left = "50%";
+      skillOrbitEl.appendChild(chip);
+      chip.addEventListener("pointerenter", () => chip.classList.add("is-hovered"));
+      chip.addEventListener("pointerleave", () => chip.classList.remove("is-hovered"));
+      orbitChips.push({
+        element: chip,
+        radius,
+        angle,
+        baseAngle: angle,
+        speed: direction * (0.011 - index * 0.0015),
+        arc,
+      });
+    });
+  });
+
+  initOrbitGlow();
+  if (!motionQuery.matches) {
+    startOrbitAnimation();
+  }
+}
+
+function initHeroAnimation() {
+  if (!window.SplitType || !window.anime) return;
+  const split = new window.SplitType(heroTitle, { types: "chars" });
+  window.anime({
+    targets: split.chars,
+    opacity: [0, 1],
+    translateY: ["40%", "0%"],
+    duration: 900,
+    easing: "easeOutExpo",
+    delay: window.anime.stagger(15),
+  });
+}
+
+function initLenis() {
+  if (!window.Lenis) return;
+  const lenis = new window.Lenis({
+    smoothWheel: true,
+    lerp: 0.08,
+  });
+
+  function raf(time) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
+}
+
+function initNav() {
+  const sections = navLinks.map((link) => document.querySelector(link.getAttribute("href")));
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          navLinks.forEach((link) => {
+            if (link.getAttribute("href").slice(1) === entry.target.id) {
+              link.classList.add("active");
+            } else {
+              link.classList.remove("active");
+            }
+          });
+        }
+      });
+    },
+    { threshold: 0.4 },
+  );
+  sections.forEach((section) => section && observer.observe(section));
+}
+
+function initReveal() {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("reveal-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.2 },
+  );
+
+  qsa(".reveal").forEach((element) => observer.observe(element));
+}
+
+function initParallax() {
+  if (motionQuery.matches || parallaxCleanup) return;
+  const tiltTargets = qsa(".tilt-target");
+  if (!tiltTargets.length) return;
+
+  const bounds = new Map();
+  const updateBounds = () => {
+    tiltTargets.forEach((el) => bounds.set(el, el.getBoundingClientRect()));
+  };
+
+  let pointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  let rafId = null;
+
+  const applyTilt = () => {
+    tiltTargets.forEach((el) => {
+      const rect = bounds.get(el);
+      if (!rect) return;
+      const relativeX = ((pointer.x - (rect.left + rect.width / 2)) / rect.width) * 12;
+      const relativeY = ((pointer.y - (rect.top + rect.height / 2)) / rect.height) * 12;
+      el.style.setProperty("--tiltX", `${relativeX}deg`);
+      el.style.setProperty("--tiltY", `${-relativeY}deg`);
+      el.classList.add("is-tilting");
+    });
+    rafId = null;
+  };
+
+  const handlePointer = (event) => {
+    pointer = { x: event.clientX, y: event.clientY };
+    if (!rafId) {
+      rafId = requestAnimationFrame(applyTilt);
+    }
+  };
+
+  const resetTilt = () => {
+    tiltTargets.forEach((el) => {
+      el.classList.remove("is-tilting");
+      el.style.removeProperty("--tiltX");
+      el.style.removeProperty("--tiltY");
+    });
+  };
+
+  const handlePointerOut = (event) => {
+    if (!event.relatedTarget || event.relatedTarget.nodeName === "HTML") {
+      resetTilt();
+    }
+  };
+
+  document.addEventListener("pointermove", handlePointer);
+  window.addEventListener("resize", updateBounds);
+  window.addEventListener("scroll", updateBounds, { passive: true });
+  document.addEventListener("pointerout", handlePointerOut);
+  updateBounds();
+
+  parallaxCleanup = () => {
+    document.removeEventListener("pointermove", handlePointer);
+    window.removeEventListener("resize", updateBounds);
+    window.removeEventListener("scroll", updateBounds, { passive: true });
+    document.removeEventListener("pointerout", handlePointerOut);
+    resetTilt();
+    parallaxCleanup = null;
+  };
+}
+
+function startOrbitAnimation() {
+  if (orbitAnimationId || !orbitChips.length || motionQuery.matches) return;
+  const baseTime = performance.now();
+  const tick = (time) => {
+    const delta = (time - baseTime) / 1000;
+    orbitChips.forEach((chip, idx) => {
+      chip.angle = chip.baseAngle + delta * chip.speed;
+      const wobble = Math.sin(delta * 0.6 + idx) * 6;
+      const x = (chip.radius + wobble) * Math.cos(chip.angle);
+      const y = (chip.radius + wobble) * Math.sin(chip.angle);
+      chip.element.style.setProperty("--orbit-x", `${x}px`);
+      chip.element.style.setProperty("--orbit-y", `${y}px`);
+    });
+    orbitAnimationId = requestAnimationFrame(tick);
+  };
+  orbitAnimationId = requestAnimationFrame(tick);
+}
+
+function stopOrbitAnimation() {
+  if (orbitAnimationId) {
+    cancelAnimationFrame(orbitAnimationId);
+    orbitAnimationId = null;
+  }
+}
+
+function initOrbitGlow() {
+  if (!skillOrbitEl || orbitGlowBound) return;
+  const handleMove = (event) => {
+    const rect = skillOrbitEl.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    skillOrbitEl.style.setProperty("--glow-x", `${x}%`);
+    skillOrbitEl.style.setProperty("--glow-y", `${y}%`);
+    skillOrbitEl.style.setProperty("--glow-opacity", "1");
+  };
+
+  const handleLeave = () => {
+    skillOrbitEl.style.setProperty("--glow-opacity", "0");
+  };
+
+  skillOrbitEl.addEventListener("pointermove", handleMove);
+  skillOrbitEl.addEventListener("pointerleave", handleLeave);
+  orbitGlowBound = true;
+}

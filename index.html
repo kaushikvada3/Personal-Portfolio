@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Kaushik Vada · Portfolio</title>
+  <meta name="description"
+    content="Portfolio for Kaushik Vada · Electrical Engineering student focused on RTL design, FPGA prototyping, and RISC-V systems." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="src/styles/main.css" />
+
+  <script defer src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.1.16/bundled/lenis.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/split-type@0.3.4/dist/index.min.js"></script>
+  <script defer src="https://unpkg.com/feather-icons"></script>
+  <script type="module" src="src/js/app.js"></script>
+</head>
+
+<body>
+  <div id="app-shell">
+    <header class="nav">
+      <div class="brand">
+        <div>
+          <p class="label">Kaushik Vada</p>
+          <p class="meta">Electrical Engineering Portfolio</p>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="#core" data-nav>core</a>
+        <a href="#experience" data-nav>experience</a>
+        <a href="#projects" data-nav>projects</a>
+        <a href="#lab" data-nav>lab</a>
+        <a href="#contact" data-nav>contact</a>
+      </nav>
+    </header>
+
+    <main id="core">
+      <section class="hero glass-panel reveal">
+        <div class="hero-content">
+          <p class="signal">Electrical Engineering · RTL · FPGA · RISC-V</p>
+          <h1 id="heroTitle">Kaushik Vada</h1>
+          <p class="subtext">
+            UC Riverside Regents Distinguished Scholar with hands-on RTL internships, research, and prototypes.
+            Experienced with SystemVerilog design, constraint-driven synthesis, timing analysis, and FPGA bring-up for
+            latency-sensitive compute systems.
+          </p>
+          <div class="cta-row">
+            <a class="primary" href="Kaushik Vada - Resume.pdf" target="_blank" rel="noreferrer">View Résumé</a>
+            <a class="secondary" href="#contact">Contact</a>
+          </div>
+        </div>
+        <div class="hero-card tilt-target">
+          <div class="hero-info">
+            <p class="eyebrow">Quick facts</p>
+            <ul>
+              <li><strong>Role:</strong> RTL & VLSI-focused EE Student</li>
+              <li><strong>School:</strong> UC Riverside · Regents Scholar</li>
+              <li><strong>GPA:</strong> 3.93 / 4.00</li>
+              <li><strong>Location:</strong> San Diego · Riverside, CA</li>
+            </ul>
+          </div>
+          <div class="hero-info">
+            <p class="eyebrow">Contact</p>
+            <ul>
+              <li><a href="mailto:kaushikvada3@gmail.com">kaushikvada3@gmail.com</a></li>
+              <li><a href="tel:+18583058647">+1 (858) 305-8647</a></li>
+              <li><a href="https://www.linkedin.com/in/kaushikv198" target="_blank" rel="noreferrer">LinkedIn</a></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="summary" class="grid reveal">
+        <article class="glass-panel stack tilt-target">
+          <p class="eyebrow">Professional Summary</p>
+          <h2>Hands-on RTL designer with research-backed experience.</h2>
+          <p>
+            Experience spans Intel RTL internships, VSCLab research, and FPGA system builds. Comfortable moving from
+            SystemVerilog microarchitecture to synthesis, timing optimization, and on-board validation using Xilinx
+            tooling and Synopsys flows.
+          </p>
+          <ul class="details">
+            <li>RISC-V CPU research contributor · VSCLab @ UCR</li>
+            <li>Constraint-driven synthesis exposure with Design Compiler + PrimeTime</li>
+            <li>FPGA simulations, synthesis, implementation, and bitstream bring-up in Vivado</li>
+          </ul>
+        </article>
+        <article class="glass-panel metrics tilt-target" id="liveMetrics" aria-live="polite"></article>
+      </section>
+
+      <section id="education" class="glass-panel reveal">
+        <header>
+          <p class="eyebrow">Education</p>
+          <h2>Grounded in rigorous EE foundations.</h2>
+        </header>
+        <div id="educationCard" class="education-card tilt-target"></div>
+      </section>
+
+      <section id="experience" class="bands reveal"></section>
+
+      <section id="projects" class="grid reveal"></section>
+
+      <section id="lab" class="glass-panel lab-panel reveal">
+        <header>
+          <p class="eyebrow">Skills</p>
+          <h2>Core capabilities and tools.</h2>
+        </header>
+        <div class="skill-orbit" id="skillOrbit"></div>
+      </section>
+
+      <section id="contact" class="contact glass-panel reveal">
+        <header>
+          <p class="eyebrow">Contact</p>
+          <h2>Get in touch</h2>
+        </header>
+        <div class="contact-grid">
+          <a class="contact-card" href="mailto:kaushikvada3@gmail.com">
+            <i data-feather="mail"></i>
+            <span>kaushikvada3@gmail.com</span>
+          </a>
+          <a class="contact-card" href="tel:+18583058647">
+            <i data-feather="phone"></i>
+            <span>+1 (858) 305-8647</span>
+          </a>
+          <a class="contact-card" href="https://www.linkedin.com/in/kaushikv198" target="_blank" rel="noreferrer">
+            <i data-feather="linkedin"></i>
+            <span>linkedin.com/in/kaushikv198</span>
+          </a>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    window.addEventListener('load', () => {
+      if (window.feather) {
+        window.feather.replace();
+      }
+    });
+  </script>
+</body>
+
+</html>
