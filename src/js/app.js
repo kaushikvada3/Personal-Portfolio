@@ -21,14 +21,27 @@ const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const ENABLE_ENHANCED_MOTION = false;
 const ORBIT_BASE_SPEED = 0.035;
 const ORBIT_SPEED_STEP = 0.006;
+const ENHANCED_MOTION_LIBS = [
+  { global: "SplitType", src: "https://cdn.jsdelivr.net/npm/split-type@0.3.4/dist/index.min.js" },
+  { global: "anime", src: "https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" },
+  { global: "Lenis", src: "https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.1.16/bundled/lenis.min.js" },
+];
+const PROJECT_INTERACT_KEYS = new Set(["Enter", " ", "Spacebar"]);
 
 const orbitChips = [];
 let orbitAnimationId = null;
 let parallaxCleanup = null;
 let glassPointerCleanup = null;
+let lenisInstance = null;
+let lenisRafId = null;
+let enhancedMotionLibsPromise = null;
 let activeNavLink = null;
 let lastFocusedElement = null;
 let modalListenersInitialized = false;
+let heroAnimationInitialized = false;
+let orbitVisibilityObserver = null;
+let isOrbitSectionVisible = false;
+let projectCardEventsBound = false;
 
 const refreshFeatherIcons = () => {
   if (window.feather) {
@@ -36,7 +49,39 @@ const refreshFeatherIcons = () => {
   }
 };
 
-document.addEventListener("DOMContentLoaded", () => {
+const isElementInViewport = (element) => {
+  if (!element || !element.getBoundingClientRect) return false;
+  const rect = element.getBoundingClientRect();
+  return rect.bottom >= 0 && rect.top <= (window.innerHeight || document.documentElement.clientHeight);
+};
+
+const loadScriptOnce = (src, globalName) =>
+  new Promise((resolve, reject) => {
+    if (globalName && window[globalName]) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.head.appendChild(script);
+  });
+
+function ensureEnhancedMotionLibs() {
+  if (!ENABLE_ENHANCED_MOTION) {
+    return Promise.resolve();
+  }
+  if (!enhancedMotionLibsPromise) {
+    enhancedMotionLibsPromise = Promise.all(
+      ENHANCED_MOTION_LIBS.map((lib) => loadScriptOnce(lib.src, lib.global)),
+    );
+  }
+  return enhancedMotionLibsPromise;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   if (heroTagline) {
     heroTagline.textContent = profile.heroTagline;
   }
@@ -46,6 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderEducation();
   renderSkillOrbit();
   if (ENABLE_ENHANCED_MOTION && !motionQuery.matches) {
+    await ensureEnhancedMotionLibs();
     initHeroAnimation();
     initLenis();
     initParallax();
@@ -66,15 +112,18 @@ document.addEventListener("DOMContentLoaded", () => {
 const handleMotionPreference = (event) => {
   if (event.matches) {
     stopOrbitAnimation();
+    destroyLenis();
     if (parallaxCleanup) {
       parallaxCleanup();
     }
     teardownGlassMotion();
   } else {
-    if (orbitChips.length) {
-      startOrbitAnimation();
-    }
+    initOrbitVisibilityObserver();
     if (ENABLE_ENHANCED_MOTION) {
+      ensureEnhancedMotionLibs().then(() => {
+        initHeroAnimation();
+        initLenis();
+      });
       initParallax();
     }
     initGlassMotion();
@@ -271,12 +320,35 @@ function renderSkillOrbit() {
   });
 
   if (!motionQuery.matches) {
+    initOrbitVisibilityObserver();
+  }
+}
+
+function initOrbitVisibilityObserver() {
+  if (!skillOrbitEl || orbitVisibilityObserver) return;
+  orbitVisibilityObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.target !== skillOrbitEl) return;
+        isOrbitSectionVisible = entry.isIntersecting;
+        if (isOrbitSectionVisible) {
+          startOrbitAnimation();
+        } else {
+          stopOrbitAnimation();
+        }
+      });
+    },
+    { threshold: 0.2 },
+  );
+  orbitVisibilityObserver.observe(skillOrbitEl);
+  isOrbitSectionVisible = isElementInViewport(skillOrbitEl);
+  if (isOrbitSectionVisible) {
     startOrbitAnimation();
   }
 }
 
 function initHeroAnimation() {
-  if (!window.SplitType || !window.anime) return;
+  if (heroAnimationInitialized || !heroTitle || !window.SplitType || !window.anime) return;
   const split = new window.SplitType(heroTitle, { types: "chars" });
   window.anime({
     targets: split.chars,
@@ -286,20 +358,32 @@ function initHeroAnimation() {
     easing: "easeOutExpo",
     delay: window.anime.stagger(15),
   });
+  heroAnimationInitialized = true;
 }
 
 function initLenis() {
-  if (!window.Lenis) return;
-  const lenis = new window.Lenis({
+  if (!window.Lenis || lenisInstance || motionQuery.matches) return;
+  lenisInstance = new window.Lenis({
     smoothWheel: true,
     lerp: 0.08,
   });
 
-  function raf(time) {
-    lenis.raf(time);
-    requestAnimationFrame(raf);
+  const raf = (time) => {
+    lenisInstance?.raf(time);
+    lenisRafId = requestAnimationFrame(raf);
+  };
+  lenisRafId = requestAnimationFrame(raf);
+}
+
+function destroyLenis() {
+  if (lenisRafId) {
+    cancelAnimationFrame(lenisRafId);
+    lenisRafId = null;
   }
-  requestAnimationFrame(raf);
+  if (lenisInstance && typeof lenisInstance.destroy === "function") {
+    lenisInstance.destroy();
+  }
+  lenisInstance = null;
 }
 
 function initNav() {
@@ -393,7 +477,7 @@ function initGlassMotion() {
     }
   };
 
-  document.addEventListener("pointermove", handlePointerMove);
+  document.addEventListener("pointermove", handlePointerMove, { passive: true });
   glassPointerCleanup = () => {
     document.removeEventListener("pointermove", handlePointerMove);
     glassPointerCleanup = null;
@@ -407,20 +491,28 @@ function teardownGlassMotion() {
   }
 }
 
+function handleProjectCardActivation(target) {
+  if (!target || typeof target.closest !== "function") return false;
+  const card = target.closest("[data-project-id]");
+  if (!card) return false;
+  const projectId = card.dataset.projectId || card.getAttribute("data-project-id");
+  if (!projectId) return false;
+  openProjectModal(projectId);
+  return true;
+}
+
 function attachProjectCardEvents() {
-  if (!projectsEl) return;
-  const cards = projectsEl.querySelectorAll("[data-project-id]");
-  cards.forEach((card) => {
-    const projectId = card.getAttribute("data-project-id");
-    const handleOpen = () => openProjectModal(projectId);
-    card.addEventListener("click", handleOpen);
-    card.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
-        event.preventDefault();
-        handleOpen();
-      }
-    });
+  if (!projectsEl || projectCardEventsBound) return;
+  projectsEl.addEventListener("click", (event) => {
+    handleProjectCardActivation(event.target);
   });
+  projectsEl.addEventListener("keydown", (event) => {
+    if (!PROJECT_INTERACT_KEYS.has(event.key)) return;
+    if (handleProjectCardActivation(event.target)) {
+      event.preventDefault();
+    }
+  });
+  projectCardEventsBound = true;
   if (!modalListenersInitialized) {
     if (projectModalClose) {
       projectModalClose.addEventListener("click", closeProjectModal);
@@ -548,7 +640,7 @@ function initParallax() {
     }
   };
 
-  document.addEventListener("pointermove", handlePointer);
+  document.addEventListener("pointermove", handlePointer, { passive: true });
   window.addEventListener("resize", updateBounds);
   window.addEventListener("scroll", updateBounds, { passive: true });
   document.addEventListener("pointerout", handlePointerOut);
@@ -565,7 +657,7 @@ function initParallax() {
 }
 
 function startOrbitAnimation() {
-  if (orbitAnimationId || !orbitChips.length || motionQuery.matches) return;
+  if (orbitAnimationId || !orbitChips.length || motionQuery.matches || !isOrbitSectionVisible) return;
   const baseTime = performance.now();
   const tick = (time) => {
     const delta = (time - baseTime) / 1000;
