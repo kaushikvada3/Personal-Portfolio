@@ -15,8 +15,8 @@ const GLASS_TARGETS =
   ".glass-panel, .hero-card, .metric-card, .project-card, .contact-card, .site-nav, .nav-cta";
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const ENABLE_ENHANCED_MOTION = false;
-const ORBIT_BASE_SPEED = 0.05;
-const ORBIT_SPEED_STEP = 0.01;
+const ORBIT_BASE_SPEED = 0.035;
+const ORBIT_SPEED_STEP = 0.006;
 
 const orbitChips = [];
 let orbitAnimationId = null;
@@ -242,7 +242,7 @@ function renderSkillOrbit() {
       skillOrbitEl.appendChild(chip);
       chip.addEventListener("pointerenter", () => chip.classList.add("is-hovered"));
       chip.addEventListener("pointerleave", () => chip.classList.remove("is-hovered"));
-      const speed = Math.max(0.02, ORBIT_BASE_SPEED - index * ORBIT_SPEED_STEP);
+      const speed = Math.max(0.015, ORBIT_BASE_SPEED - index * ORBIT_SPEED_STEP);
       orbitChips.push({
         element: chip,
         radius,

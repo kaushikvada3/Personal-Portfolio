@@ -30,9 +30,7 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--text);
-  background: radial-gradient(circle at 15% 20%, rgba(50, 212, 255, 0.25), transparent 45%),
-    radial-gradient(circle at 80% 0%, rgba(177, 147, 255, 0.22), transparent 55%),
-    linear-gradient(320deg, rgba(6, 14, 32, 0.9), rgba(1, 3, 12, 0.97)), var(--bg);
+  background: #000;
   overflow-x: hidden;
   font-size: 1rem;
   line-height: 1.7;
