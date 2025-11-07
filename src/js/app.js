@@ -11,6 +11,8 @@ const skillOrbitEl = qs("#skillOrbit");
 const heroTitle = qs("#heroTitle");
 const heroTagline = qs("#heroTagline");
 const navLinks = qsa("[data-nav]");
+const GLASS_TARGETS =
+  ".glass-panel, .hero-card, .metric-card, .project-card, .contact-card, .site-nav, .nav-cta";
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const ENABLE_ENHANCED_MOTION = false;
 const ORBIT_BASE_SPEED = 0.02;
@@ -19,6 +21,7 @@ const ORBIT_SPEED_STEP = 0.002;
 const orbitChips = [];
 let orbitAnimationId = null;
 let parallaxCleanup = null;
+let glassPointerCleanup = null;
 
 const refreshFeatherIcons = () => {
   if (window.feather) {
@@ -42,6 +45,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   initNav();
   initReveal();
+  initNavChrome();
+  if (!motionQuery.matches) {
+    initGlassMotion();
+  }
 });
 
 const handleMotionPreference = (event) => {
@@ -50,6 +57,7 @@ const handleMotionPreference = (event) => {
     if (parallaxCleanup) {
       parallaxCleanup();
     }
+    teardownGlassMotion();
   } else {
     if (orbitChips.length) {
       startOrbitAnimation();
@@ -57,6 +65,7 @@ const handleMotionPreference = (event) => {
     if (ENABLE_ENHANCED_MOTION) {
       initParallax();
     }
+    initGlassMotion();
   }
 };
 
@@ -298,6 +307,16 @@ function initNav() {
   sections.forEach((section) => section && observer.observe(section));
 }
 
+function initNavChrome() {
+  const nav = document.querySelector(".site-nav");
+  if (!nav) return;
+  const updateNavState = () => {
+    nav.classList.toggle("is-scrolled", window.scrollY > 32);
+  };
+  updateNavState();
+  window.addEventListener("scroll", updateNavState, { passive: true });
+}
+
 function initReveal() {
   const observer = new IntersectionObserver(
     (entries) => {
@@ -312,6 +331,46 @@ function initReveal() {
   );
 
   qsa(".reveal").forEach((element) => observer.observe(element));
+}
+
+function initGlassMotion() {
+  if (motionQuery.matches || glassPointerCleanup) return;
+  const surfaces = qsa(GLASS_TARGETS);
+  if (!surfaces.length) return;
+  let pointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  let rafId = null;
+
+  const updateSurfaces = () => {
+    surfaces.forEach((surface) => {
+      const rect = surface.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const x = ((pointer.x - (rect.left + rect.width / 2)) / rect.width) * 50 + 50;
+      const y = ((pointer.y - (rect.top + rect.height / 2)) / rect.height) * 50 + 50;
+      surface.style.setProperty("--glass-spot-x", `${Math.min(Math.max(x, 0), 100)}%`);
+      surface.style.setProperty("--glass-spot-y", `${Math.min(Math.max(y, 0), 100)}%`);
+    });
+    rafId = null;
+  };
+
+  const handlePointerMove = (event) => {
+    pointer = { x: event.clientX, y: event.clientY };
+    if (!rafId) {
+      rafId = requestAnimationFrame(updateSurfaces);
+    }
+  };
+
+  document.addEventListener("pointermove", handlePointerMove);
+  glassPointerCleanup = () => {
+    document.removeEventListener("pointermove", handlePointerMove);
+    glassPointerCleanup = null;
+  };
+  updateSurfaces();
+}
+
+function teardownGlassMotion() {
+  if (glassPointerCleanup) {
+    glassPointerCleanup();
+  }
 }
 
 function initParallax() {
