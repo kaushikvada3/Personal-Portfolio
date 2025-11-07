@@ -1,0 +1,11 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="kvFaviconTitle">
+  <title id="kvFaviconTitle">KV Monogram</title>
+  <defs>
+    <linearGradient id="kvAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1b2f" />
+      <stop offset="100%" stop-color="#03060d" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#kvAccent)" />
+  <path d="M18 18h6l8 11 8-11h6l-11 16 12 18h-7l-8-12-8 12h-7l12-18-11-16z" fill="#007aff" />
+</svg>

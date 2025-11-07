@@ -1,16 +1,17 @@
 :root {
   color-scheme: dark;
-  --bg: #04070f;
-  --glass: rgba(28, 32, 46, 0.6);
-  --glass-strong: rgba(35, 41, 60, 0.8);
-  --text: #f3f6ff;
-  --muted: rgba(243, 246, 255, 0.64);
-  --accent: linear-gradient(120deg, #6cfffb 0%, #b77bff 60%, #ff8ed1 100%);
-  --accent-solid: #6cfffb;
+  --bg: #03050a;
+  --surface: #0b101c;
+  --surface-alt: #10182a;
+  --glass: rgba(11, 16, 26, 0.9);
+  --glass-strong: rgba(7, 10, 18, 0.85);
+  --text: #f5f7ff;
+  --muted: rgba(245, 247, 255, 0.65);
+  --accent: #007aff;
+  --accent-solid: #007aff;
   --border: rgba(255, 255, 255, 0.08);
-  --blur: 32px;
-  font-family: "Inter", "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  --blur: 28px;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 html {
@@ -27,10 +28,22 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--text);
-  background: linear-gradient(145deg, rgba(108, 255, 251, 0.08), transparent 45%),
-    linear-gradient(320deg, rgba(255, 142, 209, 0.08), transparent 40%),
-    radial-gradient(circle at 20% 20%, rgba(108, 255, 251, 0.1), transparent 45%), var(--bg);
+  background: radial-gradient(circle at 18% 22%, rgba(0, 122, 255, 0.18), transparent 45%),
+    linear-gradient(320deg, rgba(0, 122, 255, 0.08), transparent 55%), var(--bg);
   overflow-x: hidden;
+  font-size: 1rem;
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 600;
+}
+
+p {
+  color: var(--muted);
 }
 
 #app-shell {
@@ -134,8 +147,9 @@ body {
 .nav-cta {
   padding: 0.65rem 1.2rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: var(--text);
+  border: none;
+  background: var(--accent);
+  color: #ffffff;
   text-decoration: none;
   font-size: 0.85rem;
   letter-spacing: 0.05em;
@@ -144,8 +158,7 @@ body {
 }
 
 .nav-cta:hover {
-  background: var(--text);
-  color: #04070f;
+  background: rgba(0, 122, 255, 0.75);
 }
 
 .glass-panel {
@@ -185,8 +198,8 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at top right, rgba(108, 255, 251, 0.18), transparent 55%),
-    radial-gradient(circle at bottom left, rgba(183, 123, 255, 0.18), transparent 60%);
+  background: radial-gradient(circle at top right, rgba(0, 122, 255, 0.25), transparent 55%),
+    radial-gradient(circle at bottom left, rgba(0, 122, 255, 0.12), transparent 65%);
   opacity: 0.8;
   pointer-events: none;
 }
@@ -213,7 +226,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.2em;
   font-size: 0.75rem;
-  color: var(--muted);
+  color: var(--accent);
 }
 
 .hero .subtext {
@@ -240,13 +253,14 @@ body {
 }
 
 .cta-row .primary {
-  background-image: var(--accent);
-  color: #020304;
-  box-shadow: 0 10px 30px rgba(108, 255, 251, 0.3);
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 122, 255, 0.35);
+  border: none;
 }
 
 .cta-row .secondary {
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--text);
   background: rgba(255, 255, 255, 0.02);
 }
@@ -290,9 +304,9 @@ body {
 }
 
 .section-alt:not(.glass-panel) {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface);
   border-radius: 34px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   padding: clamp(1.5rem, 3vw, 2.75rem);
 }
 
@@ -351,9 +365,7 @@ body {
 .metric-card h3 {
   margin: 0;
   font-size: 2rem;
-  background-image: var(--accent);
-  -webkit-background-clip: text;
-  color: transparent;
+  color: var(--accent);
 }
 
 .metric-card p {
@@ -365,16 +377,18 @@ body {
   width: 46px;
   height: 46px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(0, 122, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(0, 122, 255, 0.08);
+  color: var(--accent);
 }
 
 .metric-icon svg {
   width: 20px;
   height: 20px;
+  color: currentColor;
 }
 
 .bands {
@@ -382,22 +396,20 @@ body {
 }
 
 .project-card {
-  border-radius: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+  border: 1px solid var(--border);
   padding: 2rem;
-  background: rgba(10, 13, 21, 0.75);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  background: var(--surface-alt);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.project-card[data-theme="teal"] {
-  background: linear-gradient(145deg, rgba(8, 18, 24, 0.85), rgba(6, 28, 38, 0.65));
-}
-
-.project-card[data-theme="violet"] {
-  background: linear-gradient(145deg, rgba(27, 11, 32, 0.85), rgba(12, 8, 24, 0.7));
+.project-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
 
 .project-head {
@@ -410,15 +422,17 @@ body {
   width: 58px;
   height: 58px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(0, 122, 255, 0.3);
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(0, 122, 255, 0.08);
+  color: var(--accent);
 }
 
 .project-icon svg {
   width: 22px;
   height: 22px;
+  color: currentColor;
 }
 
 .project-description {
@@ -448,8 +462,8 @@ body {
   position: relative;
   padding: 2rem;
   border-radius: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(145deg, rgba(19, 22, 31, 0.85), rgba(17, 20, 28, 0.6));
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
   overflow: hidden;
 }
 
