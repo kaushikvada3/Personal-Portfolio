@@ -54,6 +54,10 @@ p {
   isolation: isolate;
 }
 
+main {
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
 .site-nav {
   display: flex;
   align-items: center;
