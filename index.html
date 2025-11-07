@@ -52,7 +52,6 @@
         <a href="#contact" data-nav>Contact</a>
         <span class="nav-indicator" aria-hidden="true"></span>
       </nav>
-      <a class="nav-cta" href="Kaushik Vada - Resume.pdf" target="_blank" rel="noreferrer">Resume</a>
     </header>
 
     <main id="core">
@@ -160,6 +159,14 @@
     <footer class="site-footer">
       <p>&copy; <span id="footerYear"></span> Kaushik Vada &middot; Built with HTML, CSS, and purpose.</p>
     </footer>
+  </div>
+  <div id="projectModal" class="project-modal" aria-hidden="true">
+    <div class="project-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="projectModalTitle">
+      <button class="project-modal__close" type="button" aria-label="Close project details">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <div class="project-modal__content"></div>
+    </div>
   </div>
   <script>
     window.addEventListener('load', () => {

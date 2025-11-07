@@ -10,6 +10,9 @@ const educationEl = qs("#educationCard");
 const skillOrbitEl = qs("#skillOrbit");
 const heroTitle = qs("#heroTitle");
 const heroTagline = qs("#heroTagline");
+const projectModal = qs("#projectModal");
+const projectModalContent = projectModal ? projectModal.querySelector(".project-modal__content") : null;
+const projectModalClose = projectModal ? projectModal.querySelector(".project-modal__close") : null;
 const navLinks = qsa("[data-nav]");
 const navIndicator = qs(".nav-indicator");
 const GLASS_TARGETS =
@@ -24,6 +27,8 @@ let orbitAnimationId = null;
 let parallaxCleanup = null;
 let glassPointerCleanup = null;
 let activeNavLink = null;
+let lastFocusedElement = null;
+let modalListenersInitialized = false;
 
 const refreshFeatherIcons = () => {
   if (window.feather) {
@@ -159,7 +164,7 @@ function renderProjects() {
   const projectCards = profile.projects
     .map(
       (proj) => `
-      <article class="project-card reveal" data-theme="${proj.theme ?? "teal"}">
+      <article class="project-card reveal" data-theme="${proj.theme ?? "teal"}" data-project-id="${proj.id ?? proj.name}" role="button" tabindex="0">
         <div class="project-head">
           <div class="project-icon">
             <i data-feather="${proj.icon ?? "cpu"}"></i>
@@ -171,9 +176,12 @@ function renderProjects() {
           </div>
         </div>
         <p class="project-description">${proj.description}</p>
-        <ul class="project-highlights">
-          ${proj.highlights.map((item) => `<li>${item}</li>`).join("")}
-        </ul>
+        ${
+          proj.tags?.length
+            ? `<ul class="project-card__tags">${proj.tags.map((tag) => `<li>${tag}</li>`).join("")}</ul>`
+            : ""
+        }
+        <span class="project-card__cta">Open details</span>
       </article>
     `,
     )
@@ -187,6 +195,7 @@ function renderProjects() {
     ${projectCards}
   `;
   refreshFeatherIcons();
+  attachProjectCardEvents();
 }
 
 function renderEducation() {
@@ -396,6 +405,100 @@ function teardownGlassMotion() {
   if (glassPointerCleanup) {
     glassPointerCleanup();
   }
+}
+
+function attachProjectCardEvents() {
+  if (!projectsEl) return;
+  const cards = projectsEl.querySelectorAll("[data-project-id]");
+  cards.forEach((card) => {
+    const projectId = card.getAttribute("data-project-id");
+    const handleOpen = () => openProjectModal(projectId);
+    card.addEventListener("click", handleOpen);
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+        event.preventDefault();
+        handleOpen();
+      }
+    });
+  });
+  if (!modalListenersInitialized) {
+    if (projectModalClose) {
+      projectModalClose.addEventListener("click", closeProjectModal);
+    }
+    if (projectModal) {
+      projectModal.addEventListener("click", (event) => {
+        if (event.target === projectModal) {
+          closeProjectModal();
+        }
+      });
+    }
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && projectModal?.classList.contains("is-visible")) {
+        closeProjectModal();
+      }
+    });
+    modalListenersInitialized = true;
+  }
+}
+
+function openProjectModal(projectId) {
+  if (!projectModal || !projectModalContent) return;
+  const project = profile.projects.find((proj) => (proj.id ?? proj.name) === projectId);
+  if (!project) return;
+  projectModalContent.innerHTML = buildProjectModalContent(project);
+  refreshFeatherIcons();
+  projectModal.classList.add("is-visible");
+  projectModal.setAttribute("aria-hidden", "false");
+  lastFocusedElement = document.activeElement;
+  document.body.style.overflow = "hidden";
+  requestAnimationFrame(() => projectModalClose?.focus());
+}
+
+function closeProjectModal() {
+  if (!projectModal) return;
+  projectModal.classList.remove("is-visible");
+  projectModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+    lastFocusedElement.focus();
+  }
+  lastFocusedElement = null;
+}
+
+function buildProjectModalContent(project) {
+  const tagsMarkup =
+    project.tags?.length
+      ? `<ul class="project-card__tags project-modal__tags">${project.tags
+          .map((tag) => `<li>${tag}</li>`)
+          .join("")}</ul>`
+      : "";
+  const highlightsMarkup =
+    project.highlights?.length
+      ? `<div>
+          <p class="eyebrow">Highlights</p>
+          <ul class="project-highlights">
+            ${project.highlights.map((item) => `<li>${item}</li>`).join("")}
+          </ul>
+        </div>`
+      : "";
+
+  return `
+    <div class="project-head">
+      <div class="project-icon">
+        <i data-feather="${project.icon ?? "cpu"}"></i>
+      </div>
+      <div>
+        <p class="eyebrow">Project</p>
+        <h3 id="projectModalTitle">${project.name}</h3>
+      </div>
+    </div>
+    <div class="project-modal__meta">
+      <span>${project.timeline}</span>
+    </div>
+    <p>${project.description}</p>
+    ${tagsMarkup}
+    ${highlightsMarkup}
+  `;
 }
 
 function initParallax() {

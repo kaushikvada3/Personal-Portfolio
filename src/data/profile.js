@@ -69,24 +69,28 @@ export const profile = {
   ],
   projects: [
     {
+      id: "field-vision-processing-system",
       name: "Field Vision Processing System",
       timeline: "Jun 2025 - Present",
       description:
         "Real-time FPGA vision stack combining a custom RISC-V processing core with sensor-specific pipelines for autonomous navigation and defense scenarios.",
       icon: "cpu",
       theme: "teal",
+      tags: ["FPGA", "RISC-V", "Vision"],
       highlights: [
         "Leveraged FPGA parallelism for low-latency perception and RISC-V firmware for decision logic.",
         "Architected secure, reconfigurable modules tailored for mission adaptability.",
       ],
     },
     {
+      id: "smart-power-monitoring",
       name: "Smart Power Monitoring & Control",
       timeline: "Nov 2024 - Present",
       description:
         "PCB-based energy monitor with embedded C/C++ firmware, wireless telemetry, and an iOS companion app.",
       icon: "activity",
       theme: "violet",
+      tags: ["Embedded", "Sensors", "iOS"],
       highlights: [
         "Integrated voltage/current sensors with microcontroller firmware for accurate telemetry.",
         "Built early iOS visualizations over Bluetooth/Wi-Fi and validated HW accuracy with scopes + multimeters.",
