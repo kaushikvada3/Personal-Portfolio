@@ -1,0 +1,16 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vsclabTitle">
+  <title id="vsclabTitle">VSCLab at UC Riverside logo</title>
+  <defs>
+    <linearGradient id="vsclabGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff8ed1" />
+      <stop offset="100%" stop-color="#6cfffb" />
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="#1a0f24" />
+  <path d="M20 40 L35 80 L50 40 L65 80 L80 40 L95 80" fill="none" stroke="url(#vsclabGradient)" stroke-width="6"
+    stroke-linecap="round" stroke-linejoin="round" />
+  <text x="50%" y="92" text-anchor="middle" font-family="Inter, 'Space Grotesk', sans-serif" font-size="18"
+    font-weight="600" fill="#f3f6ff" letter-spacing="0.12em">
+    VSCLAB
+  </text>
+</svg>

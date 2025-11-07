@@ -1,0 +1,14 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="intelTitle">
+  <title id="intelTitle">Intel Corporation logo</title>
+  <defs>
+    <linearGradient id="intelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00a9ff" />
+      <stop offset="100%" stop-color="#0068b5" />
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="url(#intelGradient)" />
+  <text x="50%" y="56%" text-anchor="middle" font-family="Inter, 'Space Grotesk', sans-serif" font-size="34"
+    font-weight="600" fill="#f3f6ff" letter-spacing="0.02em">
+    intel
+  </text>
+</svg>

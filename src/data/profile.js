@@ -1,16 +1,17 @@
 export const profile = {
   name: "Kaushik Vada",
-  title: "Electrical Engineering · RTL & VLSI",
+  title: "Electrical Engineering - RTL & VLSI",
+  heroTagline: "UC Riverside Regents Distinguished Scholar - RTL, FPGA, Synopsys flows",
   contact: {
     email: "kaushikvada3@gmail.com",
     phone: "+1 (858) 305-8647",
-    location: "San Diego · Riverside, CA",
+    location: "San Diego - Riverside, CA",
     linkedin: "https://www.linkedin.com/in/kaushikv198",
+    github: "https://github.com/kaushikvada3",
   },
   education: {
     school: "University of California, Riverside",
-    degree:
-      "B.S. Electrical Engineering · Regents Distinguished Scholar (Aug 2023 – May 2027)",
+    degree: "B.S. Electrical Engineering - Regents Distinguished Scholar (Aug 2023 - May 2027)",
     gpa: "3.93 / 4.00",
     coursework: [
       "Intro to VLSI",
@@ -43,8 +44,9 @@ export const profile = {
       company: "Intel Corporation",
       role: "RTL Design Intern",
       location: "San Diego, CA",
-      timeline: "Jun 2025 – Present",
+      timeline: "Jun 2025 - Present",
       focus: "Latency-sensitive SoC datapath RTL and verification",
+      logo: "assets/logos/intel.svg",
       bullets: [
         "Designed synthesizable SystemVerilog modules for compute datapaths, tuned for low-latency and power efficiency.",
         "Implemented self-checking verification benches and executed simulation, lint, synthesis, and STA for sign-off readiness.",
@@ -52,11 +54,12 @@ export const profile = {
       ],
     },
     {
-      company: "VSCLab · UC Riverside",
+      company: "VSCLab @ UC Riverside",
       role: "Undergraduate Researcher",
       location: "Riverside, CA",
-      timeline: "Sep 2025 – Present",
+      timeline: "Sep 2025 - Present",
       focus: "Open-source RISC-V RTL + Synopsys constraint learning",
+      logo: "assets/logos/vsclab.svg",
       bullets: [
         "Co-designing a custom RISC-V CPU core and practicing complete RTL-to-gate sign-off inside Synopsys flows.",
         "Learning constraint-driven synthesis, SDC authoring, and early optimization strategies for balanced PPA.",
@@ -66,20 +69,24 @@ export const profile = {
   ],
   projects: [
     {
-      name: "Military-Grade Field Vision Processing System",
-      timeline: "Jun 2025 – Present",
+      name: "Field Vision Processing System",
+      timeline: "Jun 2025 - Present",
       description:
         "Real-time FPGA vision stack combining a custom RISC-V processing core with sensor-specific pipelines for autonomous navigation and defense scenarios.",
+      icon: "cpu",
+      theme: "teal",
       highlights: [
         "Leveraged FPGA parallelism for low-latency perception and RISC-V firmware for decision logic.",
         "Architected secure, reconfigurable modules tailored for mission adaptability.",
       ],
     },
     {
-      name: "Smart Power Monitoring & Control System",
-      timeline: "Nov 2024 – Present",
+      name: "Smart Power Monitoring & Control",
+      timeline: "Nov 2024 - Present",
       description:
         "PCB-based energy monitor with embedded C/C++ firmware, wireless telemetry, and an iOS companion app.",
+      icon: "activity",
+      theme: "violet",
       highlights: [
         "Integrated voltage/current sensors with microcontroller firmware for accurate telemetry.",
         "Built early iOS visualizations over Bluetooth/Wi-Fi and validated HW accuracy with scopes + multimeters.",
@@ -87,10 +94,10 @@ export const profile = {
     },
   ],
   metrics: [
-    { label: "RTL Modules Verified", value: "34" },
-    { label: "FPGA Hours Logged", value: "210+" },
-    { label: "GPA", value: "3.93" },
-    { label: "Latency Target", value: "4.2ns" },
+    { label: "RTL Modules Verified", value: "34", icon: "layers" },
+    { label: "FPGA Hours Logged", value: "210+", icon: "cpu" },
+    { label: "GPA", value: "3.93", icon: "trending-up" },
+    { label: "Latency Target", value: "4.2ns", icon: "zap" },
   ],
 };
 

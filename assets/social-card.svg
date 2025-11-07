@@ -1,0 +1,29 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" role="img"
+  aria-labelledby="socialCardTitle">
+  <title id="socialCardTitle">Kaushik Vada portfolio preview</title>
+  <defs>
+    <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#04070f" />
+      <stop offset="60%" stop-color="#0a101f" />
+      <stop offset="100%" stop-color="#130b20" />
+    </linearGradient>
+    <linearGradient id="cardAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6cfffb" />
+      <stop offset="100%" stop-color="#ff8ed1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#cardBg)" />
+  <circle cx="260" cy="150" r="190" fill="rgba(108, 255, 251, 0.12)" />
+  <circle cx="980" cy="520" r="220" fill="rgba(255, 142, 209, 0.12)" />
+  <rect x="120" y="140" width="960" height="350" rx="40" fill="rgba(255, 255, 255, 0.04)"
+    stroke="rgba(255,255,255,0.08)" />
+  <text x="200" y="270" font-family="Space Grotesk, Inter, sans-serif" font-size="72" font-weight="600"
+    fill="#f3f6ff">Kaushik Vada</text>
+  <text x="200" y="340" font-family="Inter, sans-serif" font-size="32" fill="#d5dcff">
+    RTL &amp; FPGA-Focused Electrical Engineer
+  </text>
+  <text x="200" y="400" font-family="Inter, sans-serif" font-size="26" fill="#9ba3c7">
+    UC Riverside Regents Scholar · Intel RTL Intern · VSCLab Research
+  </text>
+  <rect x="200" y="440" width="320" height="8" rx="4" fill="url(#cardAccent)" />
+</svg>

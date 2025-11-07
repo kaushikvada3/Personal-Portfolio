@@ -9,25 +9,38 @@ const projectsEl = qs("#projects");
 const educationEl = qs("#educationCard");
 const skillOrbitEl = qs("#skillOrbit");
 const heroTitle = qs("#heroTitle");
+const heroTagline = qs("#heroTagline");
 const navLinks = qsa("[data-nav]");
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+const ENABLE_ENHANCED_MOTION = false;
 
 const orbitChips = [];
 let orbitAnimationId = null;
 let parallaxCleanup = null;
 let orbitGlowBound = false;
 
+const refreshFeatherIcons = () => {
+  if (window.feather) {
+    window.feather.replace();
+  }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
+  if (heroTagline) {
+    heroTagline.textContent = profile.heroTagline;
+  }
   renderMetrics();
   renderExperience();
   renderProjects();
   renderEducation();
   renderSkillOrbit();
-  initHeroAnimation();
-  initLenis();
+  if (ENABLE_ENHANCED_MOTION && !motionQuery.matches) {
+    initHeroAnimation();
+    initLenis();
+    initParallax();
+  }
   initNav();
   initReveal();
-  initParallax();
 });
 
 const handleMotionPreference = (event) => {
@@ -40,7 +53,9 @@ const handleMotionPreference = (event) => {
     if (orbitChips.length) {
       startOrbitAnimation();
     }
-    initParallax();
+    if (ENABLE_ENHANCED_MOTION) {
+      initParallax();
+    }
   }
 };
 
@@ -51,34 +66,59 @@ if (motionQuery.addEventListener) {
 }
 
 function renderMetrics() {
-  metricsEl.innerHTML = profile.metrics
-    .map(
-      (metric) => `
-        <div class="metric">
-          <h3>${metric.value}</h3>
-          <p>${metric.label}</p>
-        </div>
-      `,
-    )
-    .join("");
+  if (!metricsEl) return;
+  metricsEl.innerHTML = `
+    <div class="metrics-grid">
+      ${profile.metrics
+        .map(
+          (metric) => `
+            <div class="metric-card">
+              <div class="metric-icon">
+                <i data-feather="${metric.icon}"></i>
+              </div>
+              <div>
+                <h3>${metric.value}</h3>
+                <p>${metric.label}</p>
+              </div>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+  refreshFeatherIcons();
 }
 
 function renderExperience() {
+  if (!experienceEl) return;
   const cards = profile.experience
     .map(
       (exp) => `
       <article class="band timeline-card reveal">
         <header>
-          <div>
-            <p class="eyebrow">${exp.company}</p>
-            <h3>${exp.role}</h3>
+          <div class="experience-brand">
+            ${
+              exp.logo
+                ? `<img src="${exp.logo}" alt="${exp.company} logo" class="experience-logo" loading="lazy" />`
+                : `<div class="experience-logo placeholder">${exp.company
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
+                    .slice(0, 3)}</div>`
+            }
+            <div>
+              <p class="eyebrow">${exp.company}</p>
+              <h3>${exp.role}</h3>
+            </div>
           </div>
-          <div class="meta">
-            <p>${exp.location}</p>
-            <p>${exp.timeline}</p>
+          <div>
+            <div class="meta">
+              <p>${exp.location}</p>
+              <p>${exp.timeline}</p>
+            </div>
+            <p class="experience-focus">${exp.focus}</p>
           </div>
         </header>
-        <p>${exp.focus}</p>
         <ul>
           ${exp.bullets.map((bullet) => `<li>${bullet}</li>`).join("")}
         </ul>
@@ -98,17 +138,23 @@ function renderExperience() {
 }
 
 function renderProjects() {
+  if (!projectsEl) return;
   const projectCards = profile.projects
     .map(
       (proj) => `
-      <article class="glass-panel stack reveal">
-        <div>
-          <p class="eyebrow">Project</p>
-          <h3>${proj.name}</h3>
-          <p class="meta">${proj.timeline}</p>
+      <article class="project-card reveal" data-theme="${proj.theme ?? "teal"}">
+        <div class="project-head">
+          <div class="project-icon">
+            <i data-feather="${proj.icon ?? "cpu"}"></i>
+          </div>
+          <div>
+            <p class="eyebrow">Project</p>
+            <h3>${proj.name}</h3>
+            <p class="meta">${proj.timeline}</p>
+          </div>
         </div>
-        <p>${proj.description}</p>
-        <ul class="details">
+        <p class="project-description">${proj.description}</p>
+        <ul class="project-highlights">
           ${proj.highlights.map((item) => `<li>${item}</li>`).join("")}
         </ul>
       </article>
@@ -123,6 +169,7 @@ function renderProjects() {
     </header>
     ${projectCards}
   `;
+  refreshFeatherIcons();
 }
 
 function renderEducation() {
@@ -267,7 +314,7 @@ function initReveal() {
 }
 
 function initParallax() {
-  if (motionQuery.matches || parallaxCleanup) return;
+  if (!ENABLE_ENHANCED_MOTION || motionQuery.matches || parallaxCleanup) return;
   const tiltTargets = qsa(".tilt-target");
   if (!tiltTargets.length) return;
 

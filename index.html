@@ -5,9 +5,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Kaushik Vada · Portfolio</title>
+  <title>Kaushik Vada - RTL & VLSI Engineer</title>
   <meta name="description"
-    content="Portfolio for Kaushik Vada · Electrical Engineering student focused on RTL design, FPGA prototyping, and RISC-V systems." />
+    content="Kaushik Vada - RTL and FPGA-focused electrical engineer specializing in latency-sensitive SystemVerilog design, Synopsys flows, and FPGA prototyping." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Kaushik Vada - RTL & VLSI Engineer" />
+  <meta property="og:description"
+    content="RTL design intern and UC Riverside Regents Scholar focusing on FPGA, Synopsys flows, and RISC-V prototyping." />
+  <meta property="og:url" content="https://kaushikvada3.github.io/Personal-Portfolio/" />
+  <meta property="og:image" content="https://kaushikvada3.github.io/Personal-Portfolio/assets/social-card.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Kaushik Vada - RTL & VLSI Engineer" />
+  <meta name="twitter:description"
+    content="Electrical engineering portfolio with RTL, FPGA, and Synopsys experience." />
+  <meta name="twitter:image" content="https://kaushikvada3.github.io/Personal-Portfolio/assets/social-card.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -24,45 +35,48 @@
 
 <body>
   <div id="app-shell">
-    <header class="nav">
+    <header class="site-nav">
       <div class="brand">
+        <span class="brand-mark">KV</span>
         <div>
           <p class="label">Kaushik Vada</p>
-          <p class="meta">Electrical Engineering Portfolio</p>
+          <p class="meta">RTL &amp; VLSI Engineer</p>
         </div>
       </div>
       <nav class="nav-links">
-        <a href="#core" data-nav>core</a>
-        <a href="#experience" data-nav>experience</a>
-        <a href="#projects" data-nav>projects</a>
-        <a href="#lab" data-nav>lab</a>
-        <a href="#contact" data-nav>contact</a>
+        <a href="#hero" data-nav>Core</a>
+        <a href="#experience" data-nav>Experience</a>
+        <a href="#projects" data-nav>Projects</a>
+        <a href="#lab" data-nav>Lab</a>
+        <a href="#contact" data-nav>Contact</a>
       </nav>
+      <a class="nav-cta" href="Kaushik Vada - Resume.pdf" target="_blank" rel="noreferrer">Resume</a>
     </header>
 
     <main id="core">
-      <section class="hero glass-panel reveal">
+      <section id="hero" class="hero glass-panel reveal">
         <div class="hero-content">
-          <p class="signal">Electrical Engineering · RTL · FPGA · RISC-V</p>
+          <p class="signal">RTL &middot; FPGA &middot; RISC-V &middot; Synopsys flows</p>
           <h1 id="heroTitle">Kaushik Vada</h1>
+          <p class="hero-tagline" id="heroTagline"></p>
           <p class="subtext">
-            UC Riverside Regents Distinguished Scholar with hands-on RTL internships, research, and prototypes.
-            Experienced with SystemVerilog design, constraint-driven synthesis, timing analysis, and FPGA bring-up for
-            latency-sensitive compute systems.
+            UC Riverside Regents Scholar with hands-on RTL internships, research, and prototypes. Experienced with
+            SystemVerilog design, constraint-driven synthesis, timing analysis, and FPGA bring-up for latency-sensitive
+            compute systems.
           </p>
           <div class="cta-row">
-            <a class="primary" href="Kaushik Vada - Resume.pdf" target="_blank" rel="noreferrer">View Résumé</a>
-            <a class="secondary" href="#contact">Contact</a>
+            <a class="primary" href="Kaushik Vada - Resume.pdf" target="_blank" rel="noreferrer">View Resume</a>
+            <a class="secondary" href="#contact">Contact Me</a>
           </div>
         </div>
         <div class="hero-card tilt-target">
           <div class="hero-info">
             <p class="eyebrow">Quick facts</p>
             <ul>
-              <li><strong>Role:</strong> RTL & VLSI-focused EE Student</li>
-              <li><strong>School:</strong> UC Riverside · Regents Scholar</li>
+              <li><strong>Role:</strong> RTL &amp; VLSI-focused EE Student</li>
+              <li><strong>School:</strong> UC Riverside &middot; Regents Scholar</li>
               <li><strong>GPA:</strong> 3.93 / 4.00</li>
-              <li><strong>Location:</strong> San Diego · Riverside, CA</li>
+              <li><strong>Location:</strong> San Diego &middot; Riverside, CA</li>
             </ul>
           </div>
           <div class="hero-info">
@@ -76,7 +90,7 @@
         </div>
       </section>
 
-      <section id="summary" class="grid reveal">
+      <section id="summary" class="grid reveal section-divider">
         <article class="glass-panel stack tilt-target">
           <p class="eyebrow">Professional Summary</p>
           <h2>Hands-on RTL designer with research-backed experience.</h2>
@@ -86,7 +100,7 @@
             tooling and Synopsys flows.
           </p>
           <ul class="details">
-            <li>RISC-V CPU research contributor · VSCLab @ UCR</li>
+            <li>RISC-V CPU research contributor &middot; VSCLab @ UCR</li>
             <li>Constraint-driven synthesis exposure with Design Compiler + PrimeTime</li>
             <li>FPGA simulations, synthesis, implementation, and bitstream bring-up in Vivado</li>
           </ul>
@@ -94,7 +108,7 @@
         <article class="glass-panel metrics tilt-target" id="liveMetrics" aria-live="polite"></article>
       </section>
 
-      <section id="education" class="glass-panel reveal">
+      <section id="education" class="glass-panel reveal section-alt">
         <header>
           <p class="eyebrow">Education</p>
           <h2>Grounded in rigorous EE foundations.</h2>
@@ -102,9 +116,9 @@
         <div id="educationCard" class="education-card tilt-target"></div>
       </section>
 
-      <section id="experience" class="bands reveal"></section>
+      <section id="experience" class="bands reveal section-divider"></section>
 
-      <section id="projects" class="grid reveal"></section>
+      <section id="projects" class="grid reveal section-alt"></section>
 
       <section id="lab" class="glass-panel lab-panel reveal">
         <header>
@@ -114,10 +128,11 @@
         <div class="skill-orbit" id="skillOrbit"></div>
       </section>
 
-      <section id="contact" class="contact glass-panel reveal">
+      <section id="contact" class="contact glass-panel reveal section-alt">
         <header>
           <p class="eyebrow">Contact</p>
-          <h2>Get in touch</h2>
+          <h2>Let's collaborate.</h2>
+          <p class="contact-subtext">Open to internships, research collaborations, and FPGA/RTL consulting projects.</p>
         </header>
         <div class="contact-grid">
           <a class="contact-card" href="mailto:kaushikvada3@gmail.com">
@@ -132,14 +147,26 @@
             <i data-feather="linkedin"></i>
             <span>linkedin.com/in/kaushikv198</span>
           </a>
+          <a class="contact-card" href="https://github.com/kaushikvada3" target="_blank" rel="noreferrer">
+            <i data-feather="github"></i>
+            <span>github.com/kaushikvada3</span>
+          </a>
         </div>
       </section>
     </main>
+
+    <footer class="site-footer">
+      <p>&copy; <span id="footerYear"></span> Kaushik Vada &middot; Built with vanilla HTML, CSS, and JS</p>
+    </footer>
   </div>
   <script>
     window.addEventListener('load', () => {
       if (window.feather) {
         window.feather.replace();
+      }
+      const footerYear = document.getElementById('footerYear');
+      if (footerYear) {
+        footerYear.textContent = new Date().getFullYear();
       }
     });
   </script>
