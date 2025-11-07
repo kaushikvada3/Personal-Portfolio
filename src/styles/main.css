@@ -1,16 +1,16 @@
 :root {
   color-scheme: dark;
-  --bg: #04010c;
-  --surface: #070c16;
-  --surface-alt: #0e1526;
-  --glass: rgba(7, 10, 22, 0.9);
-  --glass-strong: rgba(6, 9, 20, 0.85);
-  --text: #f7fbff;
-  --muted: rgba(247, 251, 255, 0.68);
-  --accent: #76e3ff;
-  --accent-solid: #76e3ff;
-  --accent-strong: #ff6bdf;
-  --accent-gradient: linear-gradient(130deg, #00f5ff 0%, #7a5dff 55%, #ff4fd8 100%);
+  --bg: #02060c;
+  --surface: #050c14;
+  --surface-alt: #091524;
+  --glass: rgba(5, 11, 20, 0.9);
+  --glass-strong: rgba(5, 9, 18, 0.85);
+  --text: #f2fbff;
+  --muted: rgba(242, 251, 255, 0.7);
+  --accent: #64ffe1;
+  --accent-solid: #64ffe1;
+  --accent-strong: #00ffa3;
+  --accent-gradient: linear-gradient(125deg, #00f5ff 0%, #00ffa3 55%, #4ad9ff 100%);
   --border: rgba(255, 255, 255, 0.08);
   --blur: 30px;
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -30,9 +30,9 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--text);
-  background: radial-gradient(circle at 15% 20%, rgba(0, 245, 255, 0.2), transparent 45%),
-    radial-gradient(circle at 80% 0%, rgba(255, 79, 216, 0.2), transparent 50%),
-    linear-gradient(320deg, rgba(17, 29, 72, 0.8), rgba(4, 1, 12, 0.95)), var(--bg);
+  background: radial-gradient(circle at 15% 20%, rgba(0, 245, 255, 0.25), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(0, 255, 163, 0.18), transparent 55%),
+    linear-gradient(320deg, rgba(6, 18, 36, 0.85), rgba(2, 6, 12, 0.95)), var(--bg);
   overflow-x: hidden;
   font-size: 1rem;
   line-height: 1.7;
@@ -201,8 +201,8 @@ p {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 80% 15%, rgba(0, 245, 255, 0.3), transparent 55%),
-    radial-gradient(circle at 15% 85%, rgba(255, 79, 216, 0.25), transparent 60%);
+  background: radial-gradient(circle at 80% 15%, rgba(0, 245, 255, 0.35), transparent 55%),
+    radial-gradient(circle at 15% 85%, rgba(0, 255, 163, 0.25), transparent 60%);
   opacity: 0.8;
   pointer-events: none;
 }
@@ -382,7 +382,7 @@ p {
   width: 46px;
   height: 46px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 79, 216, 0.35);
+  border: 1px solid rgba(0, 255, 163, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -427,7 +427,7 @@ p {
   width: 58px;
   height: 58px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 79, 216, 0.4);
+  border: 1px solid rgba(0, 255, 163, 0.35);
   display: grid;
   place-items: center;
   background-image: var(--accent-gradient);
@@ -625,7 +625,7 @@ p {
 .orbit-chip.is-hovered {
   --orbit-scale: 1.12;
   background-image: var(--accent-gradient);
-  border-color: rgba(255, 79, 216, 0.5);
+  border-color: rgba(0, 255, 163, 0.5);
   box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45), 0 0 35px rgba(0, 245, 255, 0.4);
 }
 
@@ -662,7 +662,7 @@ p {
 
 .contact-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(255, 79, 216, 0.4);
+  border-color: rgba(0, 255, 163, 0.5);
 }
 
 .site-footer {
