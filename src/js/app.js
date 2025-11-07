@@ -335,11 +335,8 @@ function updateNavIndicator(target) {
 function initNavChrome() {
   const nav = document.querySelector(".site-nav");
   if (!nav) return;
-  const maxOffset = 160;
   const updateNavState = () => {
     nav.classList.toggle("is-scrolled", window.scrollY > 32);
-    const offset = Math.min(maxOffset, Math.max(0, window.scrollY));
-    nav.style.setProperty("--nav-offset", `${offset}px`);
   };
   updateNavState();
   window.addEventListener("scroll", updateNavState, { passive: true });
