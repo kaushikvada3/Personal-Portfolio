@@ -13,6 +13,8 @@ const heroTagline = qs("#heroTagline");
 const navLinks = qsa("[data-nav]");
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const ENABLE_ENHANCED_MOTION = false;
+const ORBIT_BASE_SPEED = 0.02;
+const ORBIT_SPEED_STEP = 0.002;
 
 const orbitChips = [];
 let orbitAnimationId = null;
@@ -231,12 +233,13 @@ function renderSkillOrbit() {
       skillOrbitEl.appendChild(chip);
       chip.addEventListener("pointerenter", () => chip.classList.add("is-hovered"));
       chip.addEventListener("pointerleave", () => chip.classList.remove("is-hovered"));
+      const speed = Math.max(0.007, ORBIT_BASE_SPEED - index * ORBIT_SPEED_STEP);
       orbitChips.push({
         element: chip,
         radius,
         angle,
         baseAngle: angle,
-        speed: direction * (0.011 - index * 0.0015),
+        speed: direction * speed,
         arc,
       });
     });
