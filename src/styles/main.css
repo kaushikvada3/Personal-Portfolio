@@ -543,24 +543,6 @@ body {
   width: min(720px, 100%);
   margin-left: auto;
   overflow: hidden;
-  --glow-x: 50%;
-  --glow-y: 50%;
-  --glow-opacity: 0;
-}
-
-.skill-orbit::after {
-  content: "";
-  position: absolute;
-  width: clamp(240px, 32vw, 360px);
-  height: clamp(240px, 32vw, 360px);
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle, rgba(108, 255, 251, 0.22), rgba(108, 255, 251, 0) 65%);
-  opacity: var(--glow-opacity);
-  top: var(--glow-y);
-  left: var(--glow-x);
-  transform: translate(-50%, -50%);
-  transition: opacity 0.4s ease, top 0.35s ease, left 0.35s ease;
 }
 
 .orbit-core {

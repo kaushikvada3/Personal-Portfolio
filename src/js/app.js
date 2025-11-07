@@ -17,7 +17,6 @@ const ENABLE_ENHANCED_MOTION = false;
 const orbitChips = [];
 let orbitAnimationId = null;
 let parallaxCleanup = null;
-let orbitGlowBound = false;
 
 const refreshFeatherIcons = () => {
   if (window.feather) {
@@ -243,7 +242,6 @@ function renderSkillOrbit() {
     });
   });
 
-  initOrbitGlow();
   if (!motionQuery.matches) {
     startOrbitAnimation();
   }
@@ -399,24 +397,4 @@ function stopOrbitAnimation() {
     cancelAnimationFrame(orbitAnimationId);
     orbitAnimationId = null;
   }
-}
-
-function initOrbitGlow() {
-  if (!skillOrbitEl || orbitGlowBound) return;
-  const handleMove = (event) => {
-    const rect = skillOrbitEl.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    skillOrbitEl.style.setProperty("--glow-x", `${x}%`);
-    skillOrbitEl.style.setProperty("--glow-y", `${y}%`);
-    skillOrbitEl.style.setProperty("--glow-opacity", "1");
-  };
-
-  const handleLeave = () => {
-    skillOrbitEl.style.setProperty("--glow-opacity", "0");
-  };
-
-  skillOrbitEl.addEventListener("pointermove", handleMove);
-  skillOrbitEl.addEventListener("pointerleave", handleLeave);
-  orbitGlowBound = true;
 }
