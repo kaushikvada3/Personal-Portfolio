@@ -832,6 +832,51 @@ main {
   padding-top: 1.5rem;
 }
 
+.back-to-top {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(118, 227, 255, 0.3);
+  background: linear-gradient(120deg, rgba(8, 13, 28, 0.9), rgba(3, 6, 16, 0.9));
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 60;
+}
+
+.back-to-top__icon {
+  display: inline-flex;
+  width: 1.2rem;
+  height: 1.2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(111, 208, 255, 0.7);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.back-to-top.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.back-to-top:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 4px;
+}
+
 .tilt-target {
   transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease;
   transform-style: preserve-3d;
@@ -908,14 +953,80 @@ main {
 
   .nav-links {
     flex-wrap: wrap;
+    overflow-x: auto;
+    gap: 0.35rem;
+  }
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
   }
 
   .hero-content h1 {
     font-size: 2.4rem;
   }
 
+  .hero,
+  .grid,
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cta-row {
+    flex-direction: column;
+  }
+
+  .metric-card {
+    flex-wrap: wrap;
+  }
+
   .project-card {
     padding: 1.2rem 1.3rem;
+  }
+
+  .back-to-top {
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 0.95rem;
+  }
+
+  #app-shell {
+    padding: 1rem;
+    padding-top: 6rem;
+  }
+
+  .site-nav {
+    padding: 0.9rem 1rem;
+    border-radius: 20px;
+  }
+
+  .nav-links a {
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    padding-bottom: 0.2rem;
+  }
+
+  .hero-card,
+  .glass-panel {
+    padding: 1.2rem;
+  }
+
+  .contact-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .orbit-chip {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .project-card {
+    min-height: auto;
   }
 }
 .project-modal {

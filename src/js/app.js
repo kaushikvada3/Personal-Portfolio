@@ -15,6 +15,7 @@ const projectModalContent = projectModal ? projectModal.querySelector(".project-
 const projectModalClose = projectModal ? projectModal.querySelector(".project-modal__close") : null;
 const navLinks = qsa("[data-nav]");
 const navIndicator = qs(".nav-indicator");
+const backToTopBtn = qs("#backToTop");
 const GLASS_TARGETS =
   ".glass-panel, .hero-card, .metric-card, .project-card, .contact-card, .site-nav, .nav-cta";
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -27,6 +28,9 @@ const ENHANCED_MOTION_LIBS = [
   { global: "Lenis", src: "https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.1.16/bundled/lenis.min.js" },
 ];
 const PROJECT_INTERACT_KEYS = new Set(["Enter", " ", "Spacebar"]);
+const supportsIntersectionObserver = "IntersectionObserver" in window;
+const supportsSmoothScroll = "scrollBehavior" in document.documentElement.style;
+const BACK_TO_TOP_THRESHOLD = 360;
 
 const orbitChips = [];
 let orbitAnimationId = null;
@@ -42,6 +46,7 @@ let heroAnimationInitialized = false;
 let orbitVisibilityObserver = null;
 let isOrbitSectionVisible = false;
 let projectCardEventsBound = false;
+let backToTopInitialized = false;
 
 const refreshFeatherIcons = () => {
   if (window.feather) {
@@ -102,6 +107,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!motionQuery.matches) {
     initGlassMotion();
   }
+  initBackToTop();
   window.addEventListener("resize", () => {
     if (activeNavLink) {
       updateNavIndicator(activeNavLink);
@@ -113,6 +119,11 @@ const handleMotionPreference = (event) => {
   if (event.matches) {
     stopOrbitAnimation();
     destroyLenis();
+    if (orbitVisibilityObserver && typeof orbitVisibilityObserver.disconnect === "function") {
+      orbitVisibilityObserver.disconnect();
+    }
+    orbitVisibilityObserver = null;
+    isOrbitSectionVisible = false;
     if (parallaxCleanup) {
       parallaxCleanup();
     }
@@ -269,6 +280,11 @@ function renderEducation() {
 function renderSkillOrbit() {
   if (!skillOrbitEl) return;
   stopOrbitAnimation();
+  if (orbitVisibilityObserver && typeof orbitVisibilityObserver.disconnect === "function") {
+    orbitVisibilityObserver.disconnect();
+  }
+  orbitVisibilityObserver = null;
+  isOrbitSectionVisible = false;
   skillOrbitEl.innerHTML = "";
   orbitChips.length = 0;
   const entries = Object.entries(profile.skills);
@@ -325,7 +341,12 @@ function renderSkillOrbit() {
 }
 
 function initOrbitVisibilityObserver() {
-  if (!skillOrbitEl || orbitVisibilityObserver) return;
+  if (!skillOrbitEl || orbitVisibilityObserver || motionQuery.matches) return;
+  if (!supportsIntersectionObserver) {
+    isOrbitSectionVisible = true;
+    startOrbitAnimation();
+    return;
+  }
   orbitVisibilityObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -387,18 +408,32 @@ function destroyLenis() {
 }
 
 function initNav() {
-  const sections = navLinks.map((link) => document.querySelector(link.getAttribute("href")));
+  if (!navLinks.length) return;
+  const setActiveLink = (target) => {
+    if (!target) return;
+    navLinks.forEach((link) => {
+      link.classList.toggle("active", link === target);
+    });
+    updateNavIndicator(target);
+  };
+
   navLinks.forEach((link) => {
-    link.addEventListener("click", () => updateNavIndicator(link));
+    link.addEventListener("click", () => setActiveLink(link));
   });
+
+  if (!supportsIntersectionObserver) {
+    setActiveLink(navLinks[0]);
+    return;
+  }
+
+  const sections = navLinks.map((link) => document.querySelector(link.getAttribute("href")));
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           navLinks.forEach((link) => {
             if (link.getAttribute("href").slice(1) === entry.target.id) {
-              link.classList.add("active");
-              updateNavIndicator(link);
+              setActiveLink(link);
             } else {
               link.classList.remove("active");
             }
@@ -409,9 +444,7 @@ function initNav() {
     { threshold: 0.4 },
   );
   sections.forEach((section) => section && observer.observe(section));
-  if (navLinks.length) {
-    updateNavIndicator(navLinks[0]);
-  }
+  setActiveLink(navLinks[0]);
 }
 
 function updateNavIndicator(target) {
@@ -436,6 +469,11 @@ function initNavChrome() {
 }
 
 function initReveal() {
+  const targets = qsa(".reveal");
+  if (!supportsIntersectionObserver) {
+    targets.forEach((element) => element.classList.add("reveal-visible"));
+    return;
+  }
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -448,7 +486,7 @@ function initReveal() {
     { threshold: 0.2 },
   );
 
-  qsa(".reveal").forEach((element) => observer.observe(element));
+  targets.forEach((element) => observer.observe(element));
 }
 
 function initGlassMotion() {
@@ -489,6 +527,38 @@ function teardownGlassMotion() {
   if (glassPointerCleanup) {
     glassPointerCleanup();
   }
+}
+
+function getScrollPosition() {
+  return (
+    window.pageYOffset ||
+    document.documentElement.scrollTop ||
+    document.body.scrollTop ||
+    0
+  );
+}
+
+function scrollPageToTop() {
+  if (!supportsSmoothScroll || motionQuery.matches) {
+    window.scrollTo(0, 0);
+  } else {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+function initBackToTop() {
+  if (!backToTopBtn || backToTopInitialized) return;
+  const toggleVisibility = () => {
+    const shouldShow = getScrollPosition() > BACK_TO_TOP_THRESHOLD;
+    backToTopBtn.classList.toggle("is-visible", shouldShow);
+  };
+  window.addEventListener("scroll", toggleVisibility, { passive: true });
+  backToTopBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    scrollPageToTop();
+  });
+  toggleVisibility();
+  backToTopInitialized = true;
 }
 
 function handleProjectCardActivation(target) {
