@@ -11,6 +11,7 @@ const skillOrbitEl = qs("#skillOrbit");
 const heroTitle = qs("#heroTitle");
 const heroTagline = qs("#heroTagline");
 const navLinks = qsa("[data-nav]");
+const navIndicator = qs(".nav-indicator");
 const GLASS_TARGETS =
   ".glass-panel, .hero-card, .metric-card, .project-card, .contact-card, .site-nav, .nav-cta";
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -22,6 +23,7 @@ const orbitChips = [];
 let orbitAnimationId = null;
 let parallaxCleanup = null;
 let glassPointerCleanup = null;
+let activeNavLink = null;
 
 const refreshFeatherIcons = () => {
   if (window.feather) {
@@ -49,6 +51,15 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!motionQuery.matches) {
     initGlassMotion();
   }
+  const nav = document.querySelector(".site-nav");
+  if (nav) {
+    requestAnimationFrame(() => nav.classList.add("is-ready"));
+  }
+  window.addEventListener("resize", () => {
+    if (activeNavLink) {
+      updateNavIndicator(activeNavLink);
+    }
+  });
 });
 
 const handleMotionPreference = (event) => {
@@ -288,6 +299,9 @@ function initLenis() {
 
 function initNav() {
   const sections = navLinks.map((link) => document.querySelector(link.getAttribute("href")));
+  navLinks.forEach((link) => {
+    link.addEventListener("click", () => updateNavIndicator(link));
+  });
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -295,6 +309,7 @@ function initNav() {
           navLinks.forEach((link) => {
             if (link.getAttribute("href").slice(1) === entry.target.id) {
               link.classList.add("active");
+              updateNavIndicator(link);
             } else {
               link.classList.remove("active");
             }
@@ -305,6 +320,20 @@ function initNav() {
     { threshold: 0.4 },
   );
   sections.forEach((section) => section && observer.observe(section));
+  if (navLinks.length) {
+    updateNavIndicator(navLinks[0]);
+  }
+}
+
+function updateNavIndicator(target) {
+  if (!navIndicator || !target || !target.parentElement) return;
+  const parentRect = target.parentElement.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const offset = targetRect.left - parentRect.left;
+  navIndicator.style.width = `${targetRect.width}px`;
+  navIndicator.style.transform = `translateX(${offset}px)`;
+  navIndicator.style.opacity = 1;
+  activeNavLink = target;
 }
 
 function initNavChrome() {
