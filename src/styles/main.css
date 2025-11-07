@@ -407,17 +407,6 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.18);
   transform: translate(-50%, -50%);
   pointer-events: none;
-  animation: ringSpin 42s linear infinite;
-  transform-origin: center;
-}
-
-.orbit-ring:nth-of-type(even) {
-  animation-direction: reverse;
-  animation-duration: 38s;
-}
-
-.orbit-ring:nth-of-type(odd) {
-  animation-duration: 46s;
 }
 
 .orbit-ring::after {
@@ -452,15 +441,6 @@ body {
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.4);
   box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45), 0 0 35px rgba(108, 255, 251, 0.4);
-}
-
-@keyframes ringSpin {
-  from {
-    transform: translate(-50%, -50%) rotate(0deg);
-  }
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
 }
 
 .contact-grid {
