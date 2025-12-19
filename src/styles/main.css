@@ -139,6 +139,8 @@ h4 {
   font-size: 24px;
   text-decoration: none;
   color: white;
+  line-height: 1;
+  display: inline-block;
 }
 
 .nav-items {
@@ -219,6 +221,7 @@ h4 {
   background: radial-gradient(circle, #3b82f6, #6366f1);
   top: -100px;
   right: -100px;
+  animation: float1 8s infinite ease-in-out;
 }
 
 .orb-2 {
@@ -227,16 +230,34 @@ h4 {
   background: radial-gradient(circle, #8b5cf6, #d946ef);
   bottom: -100px;
   left: -100px;
-  animation-delay: -5s;
+  animation: float2 10s infinite ease-in-out;
 }
 
-@keyframes drift {
-  0% {
+@keyframes float1 {
+
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
   }
 
+  50% {
+    transform: translate(50px, 80px) scale(1.1);
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+}
+
+@keyframes float2 {
+
+  0%,
   100% {
-    transform: translate(50px, 30px) scale(1.1);
+    transform: translate(0, 0) scale(1);
+    border-radius: 40% 60% 60% 40% / 60% 30% 70% 40%;
+  }
+
+  50% {
+    transform: translate(-60px, -50px) scale(1.15);
+    border-radius: 70% 30% 50% 50% / 30% 60% 40% 70%;
   }
 }
 
