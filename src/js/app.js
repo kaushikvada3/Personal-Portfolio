@@ -47,7 +47,7 @@ const profile = {
       ]
     },
     {
-      company: "Intel Corporation",
+      company: "Digital Force Technologies",
       role: "Hardware Design Intern",
       time: "Jun 2025 - Aug 2025",
       location: "San Diego, CA",
