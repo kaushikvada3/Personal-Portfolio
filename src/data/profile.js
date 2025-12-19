@@ -1,108 +1,57 @@
 export const profile = {
   name: "Kaushik Vada",
-  title: "Electrical Engineering - RTL & VLSI",
-  heroTagline: "UC Riverside Regents Distinguished Scholar - RTL, FPGA, Synopsys flows",
-  contact: {
-    email: "kaushikvada3@gmail.com",
-    phone: "+1 (858) 305-8647",
-    location: "San Diego - Riverside, CA",
-    linkedin: "https://www.linkedin.com/in/kaushikv198",
-    github: "https://github.com/kaushikvada3",
-  },
-  education: {
-    school: "University of California, Riverside",
-    degree: "B.S. Electrical Engineering - Regents Distinguished Scholar (Aug 2023 - May 2027)",
-    gpa: "3.93 / 4.00",
-    coursework: [
-      "Intro to VLSI",
-      "Data Structures & Algorithms",
-      "Computer Architecture",
-      "Machine Organization",
-      "Digital Logic Design",
-      "Signals & Systems",
-      "Circuit Analysis",
-      "Intro to Communication Systems",
-    ],
-  },
-  summary:
-    "Student engineer focused on fluid RTL design pipelines, FPGA prototyping, and constraint-driven silicon implementation. Exploring the entire RTL-to-gates journey to make compute feel as natural as thought.",
-  skills: {
-    rtl: [
-      "SystemVerilog",
-      "Verilog",
-      "FSM & datapath design",
-      "Assertions",
-      "Self-checking benches",
-    ],
-    fpga: ["Xilinx Vivado", "Simulation", "Synthesis", "Timing closure"],
-    eda: ["Synopsys Design Compiler (learning)", "PrimeTime STA fundamentals"],
-    programming: ["C/C++", "Python", "Linux toolchain"],
-    protocols: ["UART", "APB"],
-  },
+  title: "RTL & VLSI Engineer",
+  summary: "Student engineer focused on fluid RTL design pipelines, FPGA prototyping, and constraint-driven silicon implementation.",
+
+  projects: [
+    {
+      id: "two-level-cache",
+      year: "2024",
+      name: "Two-Level Cache Controller",
+      desc: "Designed a parameterizable two-level cache memory hierarchy (L1/L2) in SystemVerilog, implementing the MESI coherence protocol to ensure data consistency across multicore simulations. Architected for low-latency concurrent access.",
+      tags: ["SystemVerilog", "RTL", "Coherence", "Verification"],
+      icon: "layers"
+    },
+    {
+      id: "field-vision",
+      year: "2025",
+      name: "Field Vision Processing",
+      desc: "Real-time FPGA vision stack combining a custom RISC-V processing core with sensor-specific pipelines. Architected secure, reconfigurable modules tailored for mission adaptability.",
+      tags: ["FPGA", "RISC-V", "Vision", "Xilinx"],
+      icon: "cpu"
+    },
+    {
+      id: "smart-power",
+      year: "2024",
+      name: "Smart Power Monitor",
+      desc: "PCB-based energy monitor with embedded C/C++ firmware, wireless telemetry, and an iOS companion app. Integrated voltage/current sensors for precise real-time tracking.",
+      tags: ["Embedded", "IoT", "PCB Design"],
+      icon: "activity"
+    }
+  ],
+
   experience: [
     {
       company: "Intel Corporation",
       role: "RTL Design Intern",
+      time: "Jun 2025 - Present",
       location: "San Diego, CA",
-      timeline: "Jun 2025 - Present",
-      focus: "Latency-sensitive SoC datapath RTL and verification",
-      logo: "assets/logos/intel.svg",
       bullets: [
         "Designed synthesizable SystemVerilog modules for compute datapaths, tuned for low-latency and power efficiency.",
         "Implemented self-checking verification benches and executed simulation, lint, synthesis, and STA for sign-off readiness.",
-        "Closed functional/timing coverage with architecture + verification teams, resolving CDC and corner-case scenarios in industry EDA flows.",
-      ],
+        "Closed functional/timing coverage with architecture & verification teams."
+      ]
     },
     {
       company: "VSCLab @ UC Riverside",
       role: "Undergraduate Researcher",
+      time: "Sep 2025 - Present",
       location: "Riverside, CA",
-      timeline: "Sep 2025 - Present",
-      focus: "Open-source RISC-V RTL + Synopsys constraint learning",
-      logo: "assets/logos/vsclab.svg",
       bullets: [
         "Co-designing a custom RISC-V CPU core and practicing complete RTL-to-gate sign-off inside Synopsys flows.",
         "Learning constraint-driven synthesis, SDC authoring, and early optimization strategies for balanced PPA.",
-        "Reviewing timing/power reports with mentors to reason about pipeline depth, clock gating, and cell selection trade-offs.",
-      ],
-    },
-  ],
-  projects: [
-    {
-      id: "field-vision-processing-system",
-      name: "Field Vision Processing System",
-      timeline: "Jun 2025 - Present",
-      description:
-        "Real-time FPGA vision stack combining a custom RISC-V processing core with sensor-specific pipelines for autonomous navigation and defense scenarios.",
-      icon: "cpu",
-      theme: "teal",
-      tags: ["FPGA", "RISC-V", "Vision"],
-      highlights: [
-        "Leveraged FPGA parallelism for low-latency perception and RISC-V firmware for decision logic.",
-        "Architected secure, reconfigurable modules tailored for mission adaptability.",
-      ],
-    },
-    {
-      id: "smart-power-monitoring",
-      name: "Smart Power Monitoring & Control",
-      timeline: "Nov 2024 - Present",
-      description:
-        "PCB-based energy monitor with embedded C/C++ firmware, wireless telemetry, and an iOS companion app.",
-      icon: "activity",
-      theme: "violet",
-      tags: ["Embedded", "Sensors", "iOS"],
-      highlights: [
-        "Integrated voltage/current sensors with microcontroller firmware for accurate telemetry.",
-        "Built early iOS visualizations over Bluetooth/Wi-Fi and validated HW accuracy with scopes + multimeters.",
-      ],
-    },
-  ],
-  metrics: [
-    { label: "RTL Modules Verified", value: "34", icon: "layers" },
-    { label: "FPGA Hours Logged", value: "210+", icon: "cpu" },
-    { label: "GPA", value: "3.93", icon: "trending-up" },
-    { label: "Latency Target", value: "4.2ns", icon: "zap" },
-  ],
+        "Reviewing timing/power reports to optimize pipeline depth."
+      ]
+    }
+  ]
 };
-
-export default profile;

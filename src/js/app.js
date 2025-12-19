@@ -1,752 +1,184 @@
-import profile from "../data/profile.js";
+// Profile Data (Inlined for zero-dependency portability)
+const profile = {
+  name: "Kaushik Vada",
+  title: "RTL & VLSI Engineer",
+  summary: "Student engineer focused on fluid RTL design pipelines, FPGA prototyping, and constraint-driven silicon implementation.",
 
-const qs = (sel) => document.querySelector(sel);
-const qsa = (sel) => [...document.querySelectorAll(sel)];
+  projects: [
+    {
+      id: "two-level-cache",
+      year: "2024",
+      name: "Two-Level Cache Controller",
+      desc: "Designed a parameterizable two-level cache memory hierarchy (L1/L2) in SystemVerilog, implementing the MESI coherence protocol to ensure data consistency across multicore simulations. Architected for low-latency concurrent access.",
+      tags: ["SystemVerilog", "RTL", "Coherence", "Verification"],
+      icon: "layers"
+    },
+    {
+      id: "field-vision",
+      year: "2025",
+      name: "Field Vision Processing",
+      desc: "Real-time FPGA vision stack combining a custom RISC-V processing core with sensor-specific pipelines. Architected secure, reconfigurable modules tailored for mission adaptability.",
+      tags: ["FPGA", "RISC-V", "Vision", "Xilinx"],
+      icon: "cpu"
+    },
+    {
+      id: "smart-power",
+      year: "2024",
+      name: "Smart Power Monitor",
+      desc: "PCB-based energy monitor with embedded C/C++ firmware, wireless telemetry, and an iOS companion app. Integrated voltage/current sensors for precise real-time tracking.",
+      tags: ["Embedded", "IoT", "PCB Design"],
+      icon: "activity"
+    }
+  ],
 
-const metricsEl = qs("#liveMetrics");
-const experienceEl = qs("#experience");
-const projectsEl = qs("#projects");
-const educationEl = qs("#educationCard");
-const skillOrbitEl = qs("#skillOrbit");
-const heroTitle = qs("#heroTitle");
-const heroTagline = qs("#heroTagline");
-const projectModal = qs("#projectModal");
-const projectModalContent = projectModal ? projectModal.querySelector(".project-modal__content") : null;
-const projectModalClose = projectModal ? projectModal.querySelector(".project-modal__close") : null;
-const navLinks = qsa("[data-nav]");
-const navIndicator = qs(".nav-indicator");
-const backToTopBtn = qs("#backToTop");
-const GLASS_TARGETS =
-  ".glass-panel, .hero-card, .metric-card, .project-card, .contact-card, .site-nav, .nav-cta";
-const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-const ENABLE_ENHANCED_MOTION = false;
-const ORBIT_BASE_SPEED = 0.035;
-const ORBIT_SPEED_STEP = 0.006;
-const ENHANCED_MOTION_LIBS = [
-  { global: "SplitType", src: "https://cdn.jsdelivr.net/npm/split-type@0.3.4/dist/index.min.js" },
-  { global: "anime", src: "https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" },
-  { global: "Lenis", src: "https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.1.16/bundled/lenis.min.js" },
-];
-const PROJECT_INTERACT_KEYS = new Set(["Enter", " ", "Spacebar"]);
-const supportsIntersectionObserver = "IntersectionObserver" in window;
-const supportsSmoothScroll = "scrollBehavior" in document.documentElement.style;
-const BACK_TO_TOP_THRESHOLD = 360;
-
-const orbitChips = [];
-let orbitAnimationId = null;
-let parallaxCleanup = null;
-let glassPointerCleanup = null;
-let lenisInstance = null;
-let lenisRafId = null;
-let enhancedMotionLibsPromise = null;
-let activeNavLink = null;
-let lastFocusedElement = null;
-let modalListenersInitialized = false;
-let heroAnimationInitialized = false;
-let orbitVisibilityObserver = null;
-let isOrbitSectionVisible = false;
-let projectCardEventsBound = false;
-let backToTopInitialized = false;
-
-const refreshFeatherIcons = () => {
-  if (window.feather) {
-    window.feather.replace();
-  }
+  experience: [
+    {
+      company: "Intel Corporation",
+      role: "RTL Design Intern",
+      time: "Jun 2025 - Present",
+      location: "San Diego, CA",
+      bullets: [
+        "Designed synthesizable SystemVerilog modules for compute datapaths, tuned for low-latency and power efficiency.",
+        "Implemented self-checking verification benches and executed simulation, lint, synthesis, and STA for sign-off readiness.",
+        "Closed functional/timing coverage with architecture & verification teams."
+      ]
+    },
+    {
+      company: "VSCLab @ UC Riverside",
+      role: "Undergraduate Researcher",
+      time: "Sep 2025 - Present",
+      location: "Riverside, CA",
+      bullets: [
+        "Co-designing a custom RISC-V CPU core and practicing complete RTL-to-gate sign-off inside Synopsys flows.",
+        "Learning constraint-driven synthesis, SDC authoring, and early optimization strategies for balanced PPA.",
+        "Reviewing timing/power reports to optimize pipeline depth."
+      ]
+    }
+  ]
 };
 
-const isElementInViewport = (element) => {
-  if (!element || !element.getBoundingClientRect) return false;
-  const rect = element.getBoundingClientRect();
-  return rect.bottom >= 0 && rect.top <= (window.innerHeight || document.documentElement.clientHeight);
-};
-
-const loadScriptOnce = (src, globalName) =>
-  new Promise((resolve, reject) => {
-    if (globalName && window[globalName]) {
-      resolve();
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.onload = resolve;
-    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-    document.head.appendChild(script);
-  });
-
-function ensureEnhancedMotionLibs() {
-  if (!ENABLE_ENHANCED_MOTION) {
-    return Promise.resolve();
-  }
-  if (!enhancedMotionLibsPromise) {
-    enhancedMotionLibsPromise = Promise.all(
-      ENHANCED_MOTION_LIBS.map((lib) => loadScriptOnce(lib.src, lib.global)),
-    );
-  }
-  return enhancedMotionLibsPromise;
-}
-
-document.addEventListener("DOMContentLoaded", async () => {
-  if (heroTagline) {
-    heroTagline.textContent = profile.heroTagline;
-  }
-  renderMetrics();
-  renderExperience();
-  renderProjects();
-  renderEducation();
-  renderSkillOrbit();
-  if (ENABLE_ENHANCED_MOTION && !motionQuery.matches) {
-    await ensureEnhancedMotionLibs();
-    initHeroAnimation();
-    initLenis();
-    initParallax();
-  }
-  initNav();
-  initReveal();
-  initNavChrome();
-  if (!motionQuery.matches) {
-    initGlassMotion();
-  }
-  initBackToTop();
-  window.addEventListener("resize", () => {
-    if (activeNavLink) {
-      updateNavIndicator(activeNavLink);
-    }
-  });
+// Initialize Lenis
+const lenis = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
 });
 
-const handleMotionPreference = (event) => {
-  if (event.matches) {
-    stopOrbitAnimation();
-    destroyLenis();
-    if (orbitVisibilityObserver && typeof orbitVisibilityObserver.disconnect === "function") {
-      orbitVisibilityObserver.disconnect();
-    }
-    orbitVisibilityObserver = null;
-    isOrbitSectionVisible = false;
-    if (parallaxCleanup) {
-      parallaxCleanup();
-    }
-    teardownGlassMotion();
-  } else {
-    initOrbitVisibilityObserver();
-    if (ENABLE_ENHANCED_MOTION) {
-      ensureEnhancedMotionLibs().then(() => {
-        initHeroAnimation();
-        initLenis();
-      });
-      initParallax();
-    }
-    initGlassMotion();
-  }
-};
-
-if (motionQuery.addEventListener) {
-  motionQuery.addEventListener("change", handleMotionPreference);
-} else if (motionQuery.addListener) {
-  motionQuery.addListener(handleMotionPreference);
+function raf(time) {
+  lenis.raf(time);
+  requestAnimationFrame(raf);
 }
 
-function renderMetrics() {
-  if (!metricsEl) return;
-  metricsEl.innerHTML = `
-    <div class="metrics-grid">
-      ${profile.metrics
-        .map(
-          (metric) => `
-            <div class="metric-card">
-              <div class="metric-icon">
-                <i data-feather="${metric.icon}"></i>
-              </div>
-              <div>
-                <h3>${metric.value}</h3>
-                <p>${metric.label}</p>
-              </div>
+requestAnimationFrame(raf);
+
+// Initialize Feather Icons
+if (window.feather) feather.replace();
+
+// Cursor Customization
+const cursorDot = document.querySelector('.cursor-dot');
+const cursorOutline = document.querySelector('.cursor-outline');
+
+if (cursorDot && cursorOutline) {
+  window.addEventListener('mousemove', (e) => {
+    const posX = e.clientX;
+    const posY = e.clientY;
+
+    cursorDot.style.left = `${posX}px`;
+    cursorDot.style.top = `${posY}px`;
+
+    cursorOutline.animate({
+      left: `${posX}px`,
+      top: `${posY}px`
+    }, { duration: 500, fill: "forwards" });
+  });
+}
+
+// Render Content
+function renderProjects() {
+  const list = document.getElementById('project-list');
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  profile.projects.forEach((p) => {
+    const item = document.createElement('div');
+    item.classList.add('project-item');
+    item.innerHTML = `
+            <div class="project-info">
+                <span class="project-year">${p.year}</span>
+                <h3 class="project-title">${p.name}</h3>
+                <p class="project-desc">${p.desc}</p>
+                <div class="tags">
+                    ${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+                </div>
             </div>
-          `,
-        )
-        .join("")}
-    </div>
-  `;
-  refreshFeatherIcons();
+            <div class="project-visual">
+                <div class="project-visual-inner">
+                    <i data-feather="${p.icon}"></i>
+                </div>
+            </div>
+        `;
+    list.appendChild(item);
+  });
 }
 
 function renderExperience() {
-  if (!experienceEl) return;
-  const cards = profile.experience
-    .map(
-      (exp) => `
-      <article class="band timeline-card reveal">
-        <header>
-          <div class="experience-brand">
-            ${
-              exp.logo
-                ? `<img src="${exp.logo}" alt="${exp.company} logo" class="experience-logo" loading="lazy" />`
-                : `<div class="experience-logo placeholder">${exp.company
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")
-                    .slice(0, 3)}</div>`
-            }
-            <div>
-              <p class="eyebrow">${exp.company}</p>
-              <h3>${exp.role}</h3>
+  const list = document.getElementById('exp-list');
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  profile.experience.forEach((e) => {
+    const item = document.createElement('div');
+    item.classList.add('exp-item');
+    item.innerHTML = `
+            <div class="exp-header">
+                <h4 class="exp-role">${e.role}</h4>
+                <div class="exp-company">
+                    <span>${e.company}</span>
+                    <span>${e.time}</span>
+                </div>
             </div>
-          </div>
-          <div>
-            <div class="meta">
-              <p>${exp.location}</p>
-              <p>${exp.timeline}</p>
-            </div>
-            <p class="experience-focus">${exp.focus}</p>
-          </div>
-        </header>
-        <ul>
-          ${exp.bullets.map((bullet) => `<li>${bullet}</li>`).join("")}
-        </ul>
-      </article>
-    `,
-    )
-    .join("");
-  experienceEl.innerHTML = `
-    <header>
-      <p class="eyebrow">Experience</p>
-      <h2>Hands-on industry and lab impact.</h2>
-    </header>
-    <div class="timeline">
-      ${cards}
-    </div>
-  `;
-}
-
-function renderProjects() {
-  if (!projectsEl) return;
-  const projectCards = profile.projects
-    .map(
-      (proj) => `
-      <article class="project-card reveal" data-theme="${proj.theme ?? "teal"}" data-project-id="${proj.id ?? proj.name}" role="button" tabindex="0">
-        <div class="project-head">
-          <div class="project-icon">
-            <i data-feather="${proj.icon ?? "cpu"}"></i>
-          </div>
-          <div>
-            <p class="eyebrow">Project</p>
-            <h3>${proj.name}</h3>
-            <p class="meta">${proj.timeline}</p>
-          </div>
-        </div>
-        <p class="project-description">${proj.description}</p>
-        ${
-          proj.tags?.length
-            ? `<ul class="project-card__tags">${proj.tags.map((tag) => `<li>${tag}</li>`).join("")}</ul>`
-            : ""
-        }
-        <span class="project-card__cta">Open details</span>
-      </article>
-    `,
-    )
-    .join("");
-
-  projectsEl.innerHTML = `
-    <header class="full-span">
-      <p class="eyebrow">Projects</p>
-      <h2>Selected builds and prototypes.</h2>
-    </header>
-    ${projectCards}
-  `;
-  refreshFeatherIcons();
-  attachProjectCardEvents();
-}
-
-function renderEducation() {
-  const { education } = profile;
-  if (!educationEl) return;
-  const location =
-    (profile.contact && profile.contact.location) || education.location || "Riverside, CA";
-  educationEl.innerHTML = `
-    <h3>${education.school}</h3>
-    <p>${education.degree}</p>
-    <div class="education-meta">
-      <span>GPA ${education.gpa}</span>
-      <span>${location}</span>
-    </div>
-    <p>${profile.summary}</p>
-    <div class="coursework-grid">
-      ${education.coursework.map((course) => `<span class="course-chip">${course}</span>`).join("")}
-    </div>
-  `;
-}
-
-function renderSkillOrbit() {
-  if (!skillOrbitEl) return;
-  stopOrbitAnimation();
-  if (orbitVisibilityObserver && typeof orbitVisibilityObserver.disconnect === "function") {
-    orbitVisibilityObserver.disconnect();
-  }
-  orbitVisibilityObserver = null;
-  isOrbitSectionVisible = false;
-  skillOrbitEl.innerHTML = "";
-  orbitChips.length = 0;
-  const entries = Object.entries(profile.skills);
-  const baseRadius = 120;
-  const radiusStep = 55;
-
-  const core = document.createElement("div");
-  core.className = "orbit-core";
-  core.innerHTML = "<span>Core</span><span>RTL</span>";
-  skillOrbitEl.appendChild(core);
-
-  entries.forEach(([category, skills], index) => {
-    const radius = baseRadius + index * radiusStep;
-    const direction = index % 2 === 0 ? 1 : -1;
-    const arc = Math.PI * (1.35 - index * 0.08);
-    const startAngle = -Math.PI / 2 + index * 0.25;
-    const ring = document.createElement("div");
-    ring.className = "orbit-ring";
-    ring.style.width = `${radius * 2}px`;
-    ring.style.height = `${radius * 2}px`;
-    ring.dataset.label = category;
-    skillOrbitEl.appendChild(ring);
-
-    skills.forEach((skill, skillIndex) => {
-      const divisor = Math.max(skills.length - 1, 1);
-      const angle = startAngle + (skillIndex / divisor) * arc;
-      const chip = document.createElement("span");
-      chip.className = "orbit-chip";
-      chip.textContent = skill;
-      const x = radius * Math.cos(angle);
-      const y = radius * Math.sin(angle);
-      chip.style.setProperty("--orbit-x", `${x}px`);
-      chip.style.setProperty("--orbit-y", `${y}px`);
-      chip.style.top = "50%";
-      chip.style.left = "50%";
-      skillOrbitEl.appendChild(chip);
-      chip.addEventListener("pointerenter", () => chip.classList.add("is-hovered"));
-      chip.addEventListener("pointerleave", () => chip.classList.remove("is-hovered"));
-      const speed = Math.max(0.015, ORBIT_BASE_SPEED - index * ORBIT_SPEED_STEP);
-      orbitChips.push({
-        element: chip,
-        radius,
-        angle,
-        baseAngle: angle,
-        speed: direction * speed,
-        arc,
-      });
-    });
+            <ul class="exp-bullets">
+                ${e.bullets.map(b => `<li>${b}</li>`).join('')}
+            </ul>
+        `;
+    list.appendChild(item);
   });
-
-  if (!motionQuery.matches) {
-    initOrbitVisibilityObserver();
-  }
 }
 
-function initOrbitVisibilityObserver() {
-  if (!skillOrbitEl || orbitVisibilityObserver || motionQuery.matches) return;
-  if (!supportsIntersectionObserver) {
-    isOrbitSectionVisible = true;
-    startOrbitAnimation();
-    return;
-  }
-  orbitVisibilityObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.target !== skillOrbitEl) return;
-        isOrbitSectionVisible = entry.isIntersecting;
-        if (isOrbitSectionVisible) {
-          startOrbitAnimation();
-        } else {
-          stopOrbitAnimation();
-        }
-      });
-    },
-    { threshold: 0.2 },
-  );
-  orbitVisibilityObserver.observe(skillOrbitEl);
-  isOrbitSectionVisible = isElementInViewport(skillOrbitEl);
-  if (isOrbitSectionVisible) {
-    startOrbitAnimation();
-  }
-}
+// init
+renderProjects();
+renderExperience();
+if (window.feather) feather.replace(); // Re-run for dynamic content
 
-function initHeroAnimation() {
-  if (heroAnimationInitialized || !heroTitle || !window.SplitType || !window.anime) return;
-  const split = new window.SplitType(heroTitle, { types: "chars" });
-  window.anime({
-    targets: split.chars,
-    opacity: [0, 1],
-    translateY: ["40%", "0%"],
-    duration: 900,
-    easing: "easeOutExpo",
-    delay: window.anime.stagger(15),
-  });
-  heroAnimationInitialized = true;
-}
+// GSAP Animations
+if (window.gsap && window.ScrollTrigger) {
+  gsap.registerPlugin(ScrollTrigger);
 
-function initLenis() {
-  if (!window.Lenis || lenisInstance || motionQuery.matches) return;
-  lenisInstance = new window.Lenis({
-    smoothWheel: true,
-    lerp: 0.08,
-  });
+  // Hero Anims
+  const tl = gsap.timeline();
+  tl.to(".hero-title", { opacity: 1, y: 0, duration: 1, ease: "power4.out", delay: 0.2 })
+    .to(".hero-desc", { opacity: 1, y: 0, duration: 1, ease: "power4.out" }, "-=0.5");
 
-  const raf = (time) => {
-    lenisInstance?.raf(time);
-    lenisRafId = requestAnimationFrame(raf);
-  };
-  lenisRafId = requestAnimationFrame(raf);
-}
-
-function destroyLenis() {
-  if (lenisRafId) {
-    cancelAnimationFrame(lenisRafId);
-    lenisRafId = null;
-  }
-  if (lenisInstance && typeof lenisInstance.destroy === "function") {
-    lenisInstance.destroy();
-  }
-  lenisInstance = null;
-}
-
-function initNav() {
-  if (!navLinks.length) return;
-  const setActiveLink = (target) => {
-    if (!target) return;
-    navLinks.forEach((link) => {
-      link.classList.toggle("active", link === target);
-    });
-    updateNavIndicator(target);
-  };
-
-  navLinks.forEach((link) => {
-    link.addEventListener("click", () => setActiveLink(link));
-  });
-
-  if (!supportsIntersectionObserver) {
-    setActiveLink(navLinks[0]);
-    return;
-  }
-
-  const sections = navLinks.map((link) => document.querySelector(link.getAttribute("href")));
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          navLinks.forEach((link) => {
-            if (link.getAttribute("href").slice(1) === entry.target.id) {
-              setActiveLink(link);
-            } else {
-              link.classList.remove("active");
-            }
-          });
-        }
-      });
-    },
-    { threshold: 0.4 },
-  );
-  sections.forEach((section) => section && observer.observe(section));
-  setActiveLink(navLinks[0]);
-}
-
-function updateNavIndicator(target) {
-  if (!navIndicator || !target || !target.parentElement) return;
-  const parentRect = target.parentElement.getBoundingClientRect();
-  const targetRect = target.getBoundingClientRect();
-  const offset = targetRect.left - parentRect.left;
-  navIndicator.style.width = `${targetRect.width}px`;
-  navIndicator.style.transform = `translateX(${offset}px)`;
-  navIndicator.style.opacity = 1;
-  activeNavLink = target;
-}
-
-function initNavChrome() {
-  const nav = document.querySelector(".site-nav");
-  if (!nav) return;
-  const updateNavState = () => {
-    nav.classList.toggle("is-scrolled", window.scrollY > 32);
-  };
-  updateNavState();
-  window.addEventListener("scroll", updateNavState, { passive: true });
-}
-
-function initReveal() {
-  const targets = qsa(".reveal");
-  if (!supportsIntersectionObserver) {
-    targets.forEach((element) => element.classList.add("reveal-visible"));
-    return;
-  }
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("reveal-visible");
-          observer.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.2 },
-  );
-
-  targets.forEach((element) => observer.observe(element));
-}
-
-function initGlassMotion() {
-  if (motionQuery.matches || glassPointerCleanup) return;
-  const surfaces = qsa(GLASS_TARGETS);
-  if (!surfaces.length) return;
-  let pointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-  let rafId = null;
-
-  const updateSurfaces = () => {
-    surfaces.forEach((surface) => {
-      const rect = surface.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      const x = ((pointer.x - (rect.left + rect.width / 2)) / rect.width) * 50 + 50;
-      const y = ((pointer.y - (rect.top + rect.height / 2)) / rect.height) * 50 + 50;
-      surface.style.setProperty("--glass-spot-x", `${Math.min(Math.max(x, 0), 100)}%`);
-      surface.style.setProperty("--glass-spot-y", `${Math.min(Math.max(y, 0), 100)}%`);
-    });
-    rafId = null;
-  };
-
-  const handlePointerMove = (event) => {
-    pointer = { x: event.clientX, y: event.clientY };
-    if (!rafId) {
-      rafId = requestAnimationFrame(updateSurfaces);
-    }
-  };
-
-  document.addEventListener("pointermove", handlePointerMove, { passive: true });
-  glassPointerCleanup = () => {
-    document.removeEventListener("pointermove", handlePointerMove);
-    glassPointerCleanup = null;
-  };
-  updateSurfaces();
-}
-
-function teardownGlassMotion() {
-  if (glassPointerCleanup) {
-    glassPointerCleanup();
-  }
-}
-
-function getScrollPosition() {
-  return (
-    window.pageYOffset ||
-    document.documentElement.scrollTop ||
-    document.body.scrollTop ||
-    0
-  );
-}
-
-function scrollPageToTop() {
-  if (!supportsSmoothScroll || motionQuery.matches) {
-    window.scrollTo(0, 0);
-  } else {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-}
-
-function initBackToTop() {
-  if (!backToTopBtn || backToTopInitialized) return;
-  const toggleVisibility = () => {
-    const shouldShow = getScrollPosition() > BACK_TO_TOP_THRESHOLD;
-    backToTopBtn.classList.toggle("is-visible", shouldShow);
-  };
-  window.addEventListener("scroll", toggleVisibility, { passive: true });
-  backToTopBtn.addEventListener("click", (event) => {
-    event.preventDefault();
-    scrollPageToTop();
-  });
-  toggleVisibility();
-  backToTopInitialized = true;
-}
-
-function handleProjectCardActivation(target) {
-  if (!target || typeof target.closest !== "function") return false;
-  const card = target.closest("[data-project-id]");
-  if (!card) return false;
-  const projectId = card.dataset.projectId || card.getAttribute("data-project-id");
-  if (!projectId) return false;
-  openProjectModal(projectId);
-  return true;
-}
-
-function attachProjectCardEvents() {
-  if (!projectsEl || projectCardEventsBound) return;
-  projectsEl.addEventListener("click", (event) => {
-    handleProjectCardActivation(event.target);
-  });
-  projectsEl.addEventListener("keydown", (event) => {
-    if (!PROJECT_INTERACT_KEYS.has(event.key)) return;
-    if (handleProjectCardActivation(event.target)) {
-      event.preventDefault();
-    }
-  });
-  projectCardEventsBound = true;
-  if (!modalListenersInitialized) {
-    if (projectModalClose) {
-      projectModalClose.addEventListener("click", closeProjectModal);
-    }
-    if (projectModal) {
-      projectModal.addEventListener("click", (event) => {
-        if (event.target === projectModal) {
-          closeProjectModal();
-        }
-      });
-    }
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && projectModal?.classList.contains("is-visible")) {
-        closeProjectModal();
+  // Section Titles Parallax
+  gsap.utils.toArray('.section-title').forEach(title => {
+    gsap.to(title, {
+      scrollTrigger: {
+        trigger: title,
+        start: "top 80%",
+        toggleClass: "is-visible"
       }
     });
-    modalListenersInitialized = true;
-  }
-}
+  });
 
-function openProjectModal(projectId) {
-  if (!projectModal || !projectModalContent) return;
-  const project = profile.projects.find((proj) => (proj.id ?? proj.name) === projectId);
-  if (!project) return;
-  projectModalContent.innerHTML = buildProjectModalContent(project);
-  refreshFeatherIcons();
-  projectModal.classList.add("is-visible");
-  projectModal.setAttribute("aria-hidden", "false");
-  lastFocusedElement = document.activeElement;
-  document.body.style.overflow = "hidden";
-  requestAnimationFrame(() => projectModalClose?.focus());
-}
-
-function closeProjectModal() {
-  if (!projectModal) return;
-  projectModal.classList.remove("is-visible");
-  projectModal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
-  if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
-    lastFocusedElement.focus();
-  }
-  lastFocusedElement = null;
-}
-
-function buildProjectModalContent(project) {
-  const tagsMarkup =
-    project.tags?.length
-      ? `<ul class="project-card__tags project-modal__tags">${project.tags
-          .map((tag) => `<li>${tag}</li>`)
-          .join("")}</ul>`
-      : "";
-  const highlightsMarkup =
-    project.highlights?.length
-      ? `<div>
-          <p class="eyebrow">Highlights</p>
-          <ul class="project-highlights">
-            ${project.highlights.map((item) => `<li>${item}</li>`).join("")}
-          </ul>
-        </div>`
-      : "";
-
-  return `
-    <div class="project-head">
-      <div class="project-icon">
-        <i data-feather="${project.icon ?? "cpu"}"></i>
-      </div>
-      <div>
-        <p class="eyebrow">Project</p>
-        <h3 id="projectModalTitle">${project.name}</h3>
-      </div>
-    </div>
-    <div class="project-modal__meta">
-      <span>${project.timeline}</span>
-    </div>
-    <p>${project.description}</p>
-    ${tagsMarkup}
-    ${highlightsMarkup}
-  `;
-}
-
-function initParallax() {
-  if (!ENABLE_ENHANCED_MOTION || motionQuery.matches || parallaxCleanup) return;
-  const tiltTargets = qsa(".tilt-target");
-  if (!tiltTargets.length) return;
-
-  const bounds = new Map();
-  const updateBounds = () => {
-    tiltTargets.forEach((el) => bounds.set(el, el.getBoundingClientRect()));
-  };
-
-  let pointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-  let rafId = null;
-
-  const applyTilt = () => {
-    tiltTargets.forEach((el) => {
-      const rect = bounds.get(el);
-      if (!rect) return;
-      const relativeX = ((pointer.x - (rect.left + rect.width / 2)) / rect.width) * 12;
-      const relativeY = ((pointer.y - (rect.top + rect.height / 2)) / rect.height) * 12;
-      el.style.setProperty("--tiltX", `${relativeX}deg`);
-      el.style.setProperty("--tiltY", `${-relativeY}deg`);
-      el.classList.add("is-tilting");
+  // Project Reveals
+  gsap.utils.toArray('.project-item').forEach(item => {
+    gsap.to(item, {
+      scrollTrigger: {
+        trigger: item,
+        start: "top 75%",
+        toggleClass: "active"
+      }
     });
-    rafId = null;
-  };
-
-  const handlePointer = (event) => {
-    pointer = { x: event.clientX, y: event.clientY };
-    if (!rafId) {
-      rafId = requestAnimationFrame(applyTilt);
-    }
-  };
-
-  const resetTilt = () => {
-    tiltTargets.forEach((el) => {
-      el.classList.remove("is-tilting");
-      el.style.removeProperty("--tiltX");
-      el.style.removeProperty("--tiltY");
-    });
-  };
-
-  const handlePointerOut = (event) => {
-    if (!event.relatedTarget || event.relatedTarget.nodeName === "HTML") {
-      resetTilt();
-    }
-  };
-
-  document.addEventListener("pointermove", handlePointer, { passive: true });
-  window.addEventListener("resize", updateBounds);
-  window.addEventListener("scroll", updateBounds, { passive: true });
-  document.addEventListener("pointerout", handlePointerOut);
-  updateBounds();
-
-  parallaxCleanup = () => {
-    document.removeEventListener("pointermove", handlePointer);
-    window.removeEventListener("resize", updateBounds);
-    window.removeEventListener("scroll", updateBounds, { passive: true });
-    document.removeEventListener("pointerout", handlePointerOut);
-    resetTilt();
-    parallaxCleanup = null;
-  };
-}
-
-function startOrbitAnimation() {
-  if (orbitAnimationId || !orbitChips.length || motionQuery.matches || !isOrbitSectionVisible) return;
-  const baseTime = performance.now();
-  const tick = (time) => {
-    const delta = (time - baseTime) / 1000;
-    orbitChips.forEach((chip, idx) => {
-      chip.angle = chip.baseAngle + delta * chip.speed;
-      const wobble = Math.sin(delta * 0.6 + idx) * 6;
-      const x = (chip.radius + wobble) * Math.cos(chip.angle);
-      const y = (chip.radius + wobble) * Math.sin(chip.angle);
-      chip.element.style.setProperty("--orbit-x", `${x}px`);
-      chip.element.style.setProperty("--orbit-y", `${y}px`);
-    });
-    orbitAnimationId = requestAnimationFrame(tick);
-  };
-  orbitAnimationId = requestAnimationFrame(tick);
-}
-
-function stopOrbitAnimation() {
-  if (orbitAnimationId) {
-    cancelAnimationFrame(orbitAnimationId);
-    orbitAnimationId = null;
-  }
+  });
 }
