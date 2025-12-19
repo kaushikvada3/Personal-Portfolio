@@ -246,6 +246,7 @@ h4 {
   margin-bottom: 40px;
   background: linear-gradient(180deg, #fff 0%, #aaa 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   opacity: 0;
   /* Animated in */
