@@ -7,7 +7,7 @@ const profile = {
   projects: [
     {
       id: "two-level-cache",
-      year: "Jan 2025",
+      year: "Oct 2025 - Present",
       name: "Two-Level Cache RTL (L1/L2)",
       desc: "Designed a parameterizable, synthesizable two-level cache hierarchy (L1/L2) in Verilog to address the memory wall. Implemented 4-way (L1) and 8-way (L2) set-associative structures with Pseudo-LRU replacement and strict inclusion. Features a Write-back/Write-allocate policy and a custom FSM controller managing IDLE, CHECK_HIT, MISS_SELECT, and REFILL states. Verified using Synopsys VCS with directed tests for hit/miss paths and coherence.",
       tags: ["SystemVerilog", "RTL", "Synopsys VCS", "Verdi", "Computer Architecture"],
@@ -15,26 +15,37 @@ const profile = {
       icon: "layers"
     },
     {
-      id: "risc-v-pipeline",
-      year: "Jun 2025",
-      name: "RISC-V Pipeline Modules",
-      desc: "Implemented core RTL stages (Fetch, Decode, ALU) for a custom RISC-V soft-core processor on FPGA. Integrated into a larger Field-Vision Processing System for real-time applications. Validated functional correctness via Vivado simulation and waveform analysis.",
-      tags: ["Verilog", "RISC-V", "Xilinx Vivado", "FPGA"],
-      image: "assets/risc_v_pipeline.png",
-      icon: "cpu"
-    },
-    {
       id: "bms",
-      year: "Nov 2024",
+      year: "Sep 2025 - Present",
       name: "Li-ion Battery Management System",
       desc: "Developed embedded C/C++ firmware for real-time safety protection, fan control, and USB telemetry. Worked on CAD development and performed thermal CAD simulations to optimize enclosure airflow.",
       tags: ["Embedded C++", "PCB Design", "Thermal Simulation", "Hardware"],
       image: "assets/BMS.png",
       icon: "activity"
+    },
+    {
+      id: "risc-v-pipeline",
+      year: "Jun 2025 - Aug 2025",
+      name: "RISC-V Pipeline Modules",
+      desc: "Implemented core RTL stages (Fetch, Decode, ALU) for a custom RISC-V soft-core processor on FPGA. Integrated into a larger Field-Vision Processing System for real-time applications. Validated functional correctness via Vivado simulation and waveform analysis.",
+      tags: ["Verilog", "RISC-V", "Xilinx Vivado", "FPGA"],
+      image: "assets/risc_v_pipeline.png",
+      icon: "cpu"
     }
   ],
 
   experience: [
+    {
+      company: "VSCLab @ UC Riverside",
+      role: "Undergraduate Researcher",
+      time: "Sep 2025 - Present",
+      location: "Riverside, CA",
+      bullets: [
+        "Designing and implementing a custom open-source RISC-V CPU core, actively developing pipeline stages and verification infrastructure.",
+        "Developing proficiency in Verilog and Synopsys RTL-to-gate flows through ongoing research work.",
+        "Learning constraint-driven synthesis in Synopsys Design Compiler, including writing and refining SDC timing constraints."
+      ]
+    },
     {
       company: "Intel Corporation",
       role: "Hardware Design Intern",
@@ -45,17 +56,6 @@ const profile = {
         "Verified module correctness through simulation, waveform inspection, and iterative debugging in Xilinx Vivado.",
         "Collaborated with engineers integrating processor components into a larger embedded vision system.",
         "Gained exposure to synthesis and EDA workflows used in industry RTL development environments."
-      ]
-    },
-    {
-      company: "VSCLab @ UC Riverside",
-      role: "Undergraduate Researcher",
-      time: "Sep 2025 - Present",
-      location: "Riverside, CA",
-      bullets: [
-        "Designing and implementing a custom open-source RISC-V CPU core, actively developing pipeline stages and verification infrastructure.",
-        "Developing proficiency in Verilog and Synopsys RTL-to-gate flows through ongoing research work.",
-        "Learning constraint-driven synthesis in Synopsys Design Compiler, including writing and refining SDC timing constraints."
       ]
     }
   ]
