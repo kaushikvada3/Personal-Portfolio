@@ -27,7 +27,7 @@ const profile = {
       id: "bms",
       year: "Nov 2024",
       name: "Li-ion Battery Management System",
-      desc: "Engineered a custom 10-cell Li-ion BMS PCB with integrated voltage, current, and temperature sensing. Developed embedded C/C++ firmware for real-time safety protection, fan control, and USB telemetry. Performed thermal CAD simulations to optimize enclosure airflow.",
+      desc: "Developed embedded C/C++ firmware for real-time safety protection, fan control, and USB telemetry. Worked on CAD development and performed thermal CAD simulations to optimize enclosure airflow.",
       tags: ["Embedded C++", "PCB Design", "Thermal Simulation", "Hardware"],
       image: "assets/BMS.png",
       icon: "activity"
@@ -63,10 +63,10 @@ const profile = {
 
 // Initialize Lenis with smoother settings
 const lenis = new Lenis({
-  duration: 1.8, // Increased opacity/smoothness
+  duration: 0.5, // Much lower for faster settling (reactive)
   easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
   smoothWheel: true,
-  wheelMultiplier: 1.2, // Slightly more responsive
+  wheelMultiplier: 1.5, // Increased responsiveness
 });
 
 function raf(time) {
@@ -94,7 +94,7 @@ if (cursorDot && cursorOutline) {
     cursorOutline.animate({
       left: `${posX}px`,
       top: `${posY}px`
-    }, { duration: 500, fill: "forwards" });
+    }, { duration: 80, fill: "forwards" });
   });
 }
 
