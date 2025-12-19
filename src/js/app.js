@@ -203,3 +203,52 @@ if (window.gsap && window.ScrollTrigger) {
     });
   });
 }
+
+// Password Protection Logic
+const passwordModal = document.getElementById('password-modal');
+const passwordInput = document.getElementById('password-input');
+const modalSubmit = document.getElementById('modal-submit');
+const modalCancel = document.getElementById('modal-cancel');
+const resumeTriggers = document.querySelectorAll('.js-resume-trigger');
+
+function openModal(e) {
+  e.preventDefault();
+  passwordModal.classList.add('active');
+  passwordInput.value = '';
+  passwordInput.focus();
+}
+
+function closeModal() {
+  passwordModal.classList.remove('active');
+}
+
+function checkPassword() {
+  const password = passwordInput.value;
+  if (password === 'Kaushik@124') {
+    window.open('Kaushik Vada Resume.pdf', '_blank');
+    closeModal();
+  } else {
+    alert('Incorrect password. Please try again.');
+    passwordInput.value = '';
+    passwordInput.focus();
+  }
+}
+
+if (passwordModal) {
+  resumeTriggers.forEach(trigger => {
+    trigger.addEventListener('click', openModal);
+  });
+
+  modalSubmit.addEventListener('click', checkPassword);
+
+  modalCancel.addEventListener('click', closeModal);
+
+  passwordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') checkPassword();
+  });
+
+  // Close when clicking outside content
+  passwordModal.addEventListener('click', (e) => {
+    if (e.target === passwordModal) closeModal();
+  });
+}

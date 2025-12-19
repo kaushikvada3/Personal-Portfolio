@@ -29,7 +29,7 @@
       <a href="#experience">Experience</a>
 
     </div>
-    <a href="Kaushik Vada Resume.pdf" target="_blank" class="btn-clean">Resume</a>
+    <a href="#" class="btn-clean js-resume-trigger">Resume</a>
   </nav>
 
   <main id="smooth-wrapper">
@@ -87,7 +87,7 @@
           <div class="footer-links">
             <a href="mailto:kaushikvada3@gmail.com" class="footer-link">Email</a>
             <a href="https://www.linkedin.com/in/kaushikv198" target="_blank" class="footer-link">LinkedIn</a>
-            <a href="Kaushik Vada Resume.pdf" target="_blank" class="footer-link">Resume</a>
+            <a href="#" class="footer-link js-resume-trigger">Resume</a>
           </div>
           <span class="copyright">© 2025 Kaushik Vada.</span>
         </div>
@@ -95,6 +95,19 @@
 
     </div>
   </main>
+
+  <!-- Password Modal -->
+  <div id="password-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Protected Content</h3>
+      <p>Please enter the password to view the resume.</p>
+      <input type="password" id="password-input" placeholder="Password">
+      <div class="modal-actions">
+        <button id="modal-submit">Unlock</button>
+        <button id="modal-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <!-- GSAP for Animations -->
