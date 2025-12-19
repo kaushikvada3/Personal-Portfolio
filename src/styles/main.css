@@ -61,6 +61,18 @@ body {
   pointer-events: none;
 }
 
+@media (pointer: coarse) {
+
+  .cursor-dot,
+  .cursor-outline {
+    display: none;
+  }
+
+  body {
+    cursor: auto;
+  }
+}
+
 .cursor-dot {
   width: 8px;
   height: 8px;
@@ -503,6 +515,70 @@ h4 {
   .orb-2 {
     width: 300px;
     height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 20px;
+  }
+
+  .nav {
+    padding: 0 20px;
+    background: rgba(5, 5, 7, 0.8);
+    backdrop-filter: blur(10px);
+  }
+
+  .nav-items {
+    display: none;
+    /* Simplify nav for mobile */
+  }
+
+  .section {
+    padding: 80px 0;
+  }
+
+  .hero-title {
+    font-size: 42px;
+  }
+
+  .hero-desc {
+    font-size: 18px;
+  }
+
+  .section-title {
+    font-size: 40px;
+    margin-bottom: 40px;
+  }
+
+  .footer-title {
+    font-size: 32px;
+  }
+
+  .project-visual {
+    height: 250px;
+  }
+
+  .project-visual-inner {
+    font-size: 60px;
+  }
+
+  .project-title {
+    font-size: 32px;
+  }
+
+  .split-layout {
+    gap: 40px;
+  }
+
+  .exp-item {
+    padding: 24px;
+  }
+
+  .footer-links {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
   }
 }
 
