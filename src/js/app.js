@@ -19,6 +19,7 @@ const profile = {
       name: "RISC-V Pipeline Modules",
       desc: "Implemented core RTL stages (Fetch, Decode, ALU) for a custom RISC-V soft-core processor on FPGA. Integrated into a larger Field-Vision Processing System for real-time applications. Validated functional correctness via Vivado simulation and waveform analysis.",
       tags: ["Verilog", "RISC-V", "Xilinx Vivado", "FPGA"],
+      image: "assets/risc_v_pipeline.png",
       icon: "cpu"
     },
     {
@@ -105,6 +106,23 @@ function renderProjects() {
   profile.projects.forEach((p) => {
     const item = document.createElement('div');
     item.classList.add('project-item');
+
+    // Determine visual content: Image or Icon
+    let visualContent = '';
+    if (p.image) {
+      visualContent = `
+                <div class="project-visual-inner" style="background: none; padding: 0;">
+                    <img src="${p.image}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px; opacity: 0.9;">
+                </div>
+            `;
+    } else {
+      visualContent = `
+                <div class="project-visual-inner">
+                    <i data-feather="${p.icon}"></i>
+                </div>
+            `;
+    }
+
     item.innerHTML = `
             <div class="project-info">
                 <span class="project-year">${p.year}</span>
@@ -115,9 +133,7 @@ function renderProjects() {
                 </div>
             </div>
             <div class="project-visual">
-                <div class="project-visual-inner">
-                    <i data-feather="${p.icon}"></i>
-                </div>
+                ${visualContent}
             </div>
         `;
     list.appendChild(item);
