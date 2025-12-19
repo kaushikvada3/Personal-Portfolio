@@ -11,6 +11,7 @@ const profile = {
       name: "Two-Level Cache RTL (L1/L2)",
       desc: "Designed a parameterizable, synthesizable two-level cache hierarchy (L1/L2) in Verilog to address the memory wall. Implemented 4-way (L1) and 8-way (L2) set-associative structures with Pseudo-LRU replacement and strict inclusion. Features a Write-back/Write-allocate policy and a custom FSM controller managing IDLE, CHECK_HIT, MISS_SELECT, and REFILL states. Verified using Synopsys VCS with directed tests for hit/miss paths and coherence.",
       tags: ["SystemVerilog", "RTL", "Synopsys VCS", "Verdi", "Computer Architecture"],
+      image: "assets/Cache_project.png",
       icon: "layers"
     },
     {
@@ -28,13 +29,14 @@ const profile = {
       name: "Li-ion Battery Management System",
       desc: "Engineered a custom 10-cell Li-ion BMS PCB with integrated voltage, current, and temperature sensing. Developed embedded C/C++ firmware for real-time safety protection, fan control, and USB telemetry. Performed thermal CAD simulations to optimize enclosure airflow.",
       tags: ["Embedded C++", "PCB Design", "Thermal Simulation", "Hardware"],
+      image: "assets/BMS.png",
       icon: "activity"
     }
   ],
 
   experience: [
     {
-      company: "Digital Force Technologies (DFT)",
+      company: "Intel Corporation",
       role: "Hardware Design Intern",
       time: "Jun 2025 - Aug 2025",
       location: "San Diego, CA",
