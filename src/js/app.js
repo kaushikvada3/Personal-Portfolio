@@ -1,36 +1,67 @@
-// Profile Data (Inlined for zero-dependency portability)
+// Profile Data
 const profile = {
   name: "Kaushik Vada",
   title: "RTL & VLSI Engineer",
   summary: "Electrical Engineering student at UCR (GPA 3.93) specializing in VLSI, RTL design, and Computer Architecture. Experienced in SystemVerilog, FPGA prototyping, and ASIC verification flows.",
-
+  contacts: {
+    email: "kaushikvada3@gmail.com",
+    phone: "858-305-8647",
+    linkedin: "https://www.linkedin.com/in/kaushikv198",
+    github: "https://github.com/kaushikvada3",
+    resume: "assets/Kaushik_Vada_Resume.pdf"
+  },
+  skills: {
+    languages: "Verilog, SystemVerilog, C/C++, Python, TCL, MATLAB, LaTeX",
+    tools: "Synopsys Design Compiler, Synopsys VCS, Xilinx Vivado, Verdi, LTspice, Cadence Virtuoso",
+    concepts: "RTL Design, Static Timing Analysis, Computer Architecture, Caches, RISC-V Architecture, Logic Synthesis",
+    protocols: "UART, APB, Valid/Ready Handshake",
+    os: "Unix/Linux, Windows"
+  },
+  education: {
+    school: "University of California, Riverside",
+    degree: "B.S. Electrical Engineering · Regents Distinguished Scholar",
+    date: "Aug 2023 - May 2027",
+    details: [
+      "GPA: 3.93/4.00",
+      "Relevant Coursework: Introduction to VLSI, Data Structures and Algorithms, Design and Architecture of Computer Systems, Machine Organization and Assembly Language, Digital Logic Design."
+    ]
+  },
   projects: [
     {
       id: "two-level-cache",
-      year: "Oct 2025 - Present",
+      year: "Verilog · Caches · Jan 2025 - Present",
       name: "Two-Level Cache RTL (L1/L2)",
-      desc: "Designed a parameterizable, synthesizable two-level cache hierarchy (L1/L2) in Verilog to address the memory wall. Implemented 4-way (L1) and 8-way (L2) set-associative structures with Pseudo-LRU replacement and strict inclusion. Features a Write-back/Write-allocate policy and a custom FSM controller managing IDLE, CHECK_HIT, MISS_SELECT, and REFILL states. Verified using Synopsys VCS with directed tests for hit/miss paths and coherence.",
-      tags: ["SystemVerilog", "RTL", "Synopsys VCS", "Verdi", "Computer Architecture"],
-      image: "assets/Cache_project.png",
-      icon: "layers"
-    },
-    {
-      id: "bms",
-      year: "Sep 2025 - Present",
-      name: "Li-ion Battery Management System",
-      desc: "Developed embedded C/C++ firmware for real-time safety protection, fan control, and USB telemetry. Worked on CAD development and performed thermal CAD simulations to optimize enclosure airflow.",
-      tags: ["Embedded C++", "PCB Design", "Thermal Simulation", "Hardware"],
-      image: "assets/BMS.png",
-      icon: "activity"
+      desc: "Designed a parameterizable two-level cache memory hierarchy (L1/L2) in SystemVerilog, implementing the MESI coherence protocol to ensure data consistency across multicore simulations. Architected for low-latency concurrent access.",
+      bullets: [
+        "Implemented configurable Verilog RTL for L1/L2 caches (parameterized sets, ways, and line sizes) with LRU replacement and write-back/write-allocate policies.",
+        "Designed tag/data/valid arrays and a lightweight memory interface to emulate main-memory latency and hierarchy-level handshakes.",
+        "Developed directed verification tests in Synopsys VCS to stress hit/miss paths, replacement behavior, and write-back/write-allocate flows.",
+        "Debugged behavior using Verdi by instrumenting hit/miss counters, tracing tag/LRU updates, and inspecting waveforms across cache configurations.",
+        "Analyzed timing and throughput trade-offs through parameter sweeps under varying associativities and line sizes."
+      ]
     },
     {
       id: "risc-v-pipeline",
-      year: "Jun 2025 - Aug 2025",
+      year: "Verilog · FPGA · Jun 2025 - Present",
       name: "RISC-V Pipeline Modules",
-      desc: "Implemented core RTL stages (Fetch, Decode, ALU) for a custom RISC-V soft-core processor on FPGA. Integrated into a larger Field-Vision Processing System for real-time applications. Validated functional correctness via Vivado simulation and waveform analysis.",
-      tags: ["Verilog", "RISC-V", "Xilinx Vivado", "FPGA"],
-      image: "assets/risc_v_pipeline.png",
-      icon: "cpu"
+      desc: "Implemented core RTL stages for a custom RISC-V soft-core processor on FPGA. Validated correctness via Vivado simulation and waveform analysis.",
+      bullets: [
+        "Implemented core RTL modules for a custom RISC-V processor on FPGA, including Instruction Fetch, Instruction Decode, and ALU stages.",
+        "Simulated, debugged, and waveform-analyzed pipeline behavior using Xilinx Vivado.",
+        "Collaborated with teammates integrating pipeline modules into a larger embedded vision system."
+      ]
+    },
+    {
+      id: "bms",
+      year: "Embedded · BMS · Nov 2024 - Present",
+      name: "Battery Management System",
+      desc: "PCB-based energy monitor with embedded C/C++ firmware, wireless telemetry, and an iOS companion app.",
+      bullets: [
+        "Designing a custom PCB-based 10-cell Li-ion BMS with voltage, current, and temperature sensing for safe pack operation.",
+        "Performing CAD modeling and thermal simulations to evaluate airflow, heat dissipation, and enclosure design for reliable cooling.",
+        "Developing embedded C/C++ firmware for data acquisition, fan control, USB communication, and real-time safety protection.",
+        "Validating hardware performance using oscilloscopes, multimeters, and thermistors to ensure accurate sensing and thermal response."
+      ]
     }
   ],
 
@@ -38,22 +69,22 @@ const profile = {
     {
       company: "VSCLab @ UC Riverside",
       role: "Undergraduate Researcher",
-      time: "Sep 2025 - Present",
       location: "Riverside, CA",
+      time: "Sep 2025 - Present",
       bullets: [
-        "Designing and implementing a custom open-source RISC-V CPU core, actively developing pipeline stages and verification infrastructure.",
-        "Developing proficiency in Verilog and Synopsys RTL-to-gate flows through ongoing research work.",
-        "Learning constraint-driven synthesis in Synopsys Design Compiler, including writing and refining SDC timing constraints."
+        "Co-designing a custom RISC-V CPU core and practicing complete RTL-to-gate sign-off inside Synopsys flows.",
+        "Learning constraint-driven synthesis, SDC authoring, and early optimization strategies for balanced PPA.",
+        "Reviewing timing/power reports to optimize pipeline depth."
       ]
     },
     {
       company: "Digital Force Technologies",
       role: "Hardware Design Intern",
-      time: "Jun 2025 - Aug 2025",
       location: "San Diego, CA",
+      time: "Jun 2025 - Aug 2025",
       bullets: [
         "Implemented core RTL modules for a custom RISC-V processor on FPGA, including Instruction Fetch, Instruction Decode, and ALU stages.",
-        "Verified module correctness through simulation, waveform inspection, and iterative debugging in Xilinx Vivado.",
+        "Verified module correctness through simulation, waveform inspection, and iterative debugging.",
         "Collaborated with engineers integrating processor components into a larger embedded vision system.",
         "Gained exposure to synthesis and EDA workflows used in industry RTL development environments."
       ]
@@ -63,10 +94,14 @@ const profile = {
 
 // Initialize Lenis with smoother settings
 const lenis = new Lenis({
-  duration: 0.5, // Much lower for faster settling (reactive)
+  duration: 1.2,
   easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-  smoothWheel: true,
-  wheelMultiplier: 1.5, // Increased responsiveness
+  direction: 'vertical',
+  gestureDirection: 'vertical',
+  smooth: true,
+  mouseMultiplier: 1,
+  smoothTouch: false,
+  touchMultiplier: 2,
 });
 
 function raf(time) {
@@ -74,10 +109,14 @@ function raf(time) {
   requestAnimationFrame(raf);
 }
 
-requestAnimationFrame(raf);
+// GSAP ScrollTrigger integration with Lenis
+lenis.on('scroll', ScrollTrigger.update);
+gsap.ticker.add((time) => {
+  lenis.raf(time * 1000);
+});
+gsap.ticker.lagSmoothing(0);
 
-// Initialize Feather Icons
-if (window.feather) feather.replace();
+requestAnimationFrame(raf);
 
 // Cursor Customization
 const cursorDot = document.querySelector('.cursor-dot');
@@ -94,11 +133,11 @@ if (cursorDot && cursorOutline) {
     cursorOutline.animate({
       left: `${posX}px`,
       top: `${posY}px`
-    }, { duration: 80, fill: "forwards" });
+    }, { duration: 500, fill: "forwards" });
   });
 }
 
-// Render Content
+// Render Functions for Crystal Glass Aesthetic
 function renderProjects() {
   const list = document.getElementById('project-list');
   if (!list) return;
@@ -107,37 +146,23 @@ function renderProjects() {
 
   profile.projects.forEach((p) => {
     const item = document.createElement('div');
-    item.classList.add('project-item');
+    item.className = 'liquidGlass-wrapper project-card-glass';
 
-    // Determine visual content: Image or Icon
-    let visualContent = '';
-    if (p.image) {
-      visualContent = `
-                <div class="project-visual-inner" style="background: none; padding: 0;">
-                    <img src="${p.image}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px; opacity: 0.9;">
-                </div>
-            `;
-    } else {
-      visualContent = `
-                <div class="project-visual-inner">
-                    <i data-feather="${p.icon}"></i>
-                </div>
-            `;
-    }
+    // Create the inner content
+    const bulletsHtml = p.bullets.map(b => `<li>${b}</li>`).join('');
 
     item.innerHTML = `
-            <div class="project-info">
-                <span class="project-year">${p.year}</span>
-                <h3 class="project-title">${p.name}</h3>
-                <p class="project-desc">${p.desc}</p>
-                <div class="tags">
-                    ${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}
-                </div>
-            </div>
-            <div class="project-visual">
-                ${visualContent}
-            </div>
-        `;
+      <div class="liquidGlass-text">
+        <div class="project-card-content">
+          <span class="project-tech">${p.year}</span>
+          <h3>${p.name}</h3>
+          <ul>
+            ${bulletsHtml}
+          </ul>
+        </div>
+      </div>
+    `;
+
     list.appendChild(item);
   });
 }
@@ -150,105 +175,146 @@ function renderExperience() {
 
   profile.experience.forEach((e) => {
     const item = document.createElement('div');
-    item.classList.add('exp-item');
+    item.className = 'liquidGlass-wrapper exp-item-glass';
+
+    const bulletsHtml = e.bullets.map(b => `<li>${b}</li>`).join('');
+
     item.innerHTML = `
-            <div class="exp-header">
-                <h4 class="exp-role">${e.role}</h4>
-                <div class="exp-company">
-                    <span>${e.company}</span>
-                    <span>${e.time}</span>
-                </div>
-            </div>
-            <ul class="exp-bullets">
-                ${e.bullets.map(b => `<li>${b}</li>`).join('')}
-            </ul>
-        `;
+      <div class="liquidGlass-text">
+        <div class="exp-item-content">
+          <h4>${e.role}</h4>
+          <div class="exp-company">${e.company} · ${e.location}</div>
+          <div class="exp-date">${e.time}</div>
+          <ul>
+            ${bulletsHtml}
+          </ul>
+        </div>
+      </div>
+    `;
     list.appendChild(item);
   });
 }
 
-// init
-renderProjects();
-renderExperience();
-if (window.feather) feather.replace(); // Re-run for dynamic content
+function renderSkills() {
+  const grid = document.querySelector('.skills-grid');
+  if (!grid) return;
 
-// GSAP Animations
-if (window.gsap && window.ScrollTrigger) {
-  gsap.registerPlugin(ScrollTrigger);
+  grid.innerHTML = '';
 
-  // Hero Anims
-  const tl = gsap.timeline();
-  tl.to(".hero-title", { opacity: 1, y: 0, duration: 1, ease: "power4.out", delay: 0.2 })
-    .to(".hero-desc", { opacity: 1, y: 0, duration: 1, ease: "power4.out" }, "-=0.5");
+  // Map friendly names for keys
+  const titles = {
+    languages: "Programming Languages",
+    tools: "Tools",
+    concepts: "Concepts",
+    protocols: "Protocols",
+    os: "OS/Environment"
+  };
 
-  // Section Titles Parallax
-  gsap.utils.toArray('.section-title').forEach(title => {
-    gsap.to(title, {
-      scrollTrigger: {
-        trigger: title,
-        start: "top 80%",
-        toggleClass: "is-visible"
-      }
-    });
-  });
+  for (const [key, value] of Object.entries(profile.skills)) {
+    const item = document.createElement('div');
+    item.className = 'liquidGlass-wrapper skills-card-glass';
 
-  // Project Reveals
-  gsap.utils.toArray('.project-item').forEach(item => {
-    gsap.to(item, {
-      scrollTrigger: {
-        trigger: item,
-        start: "top 75%",
-        toggleClass: "active"
-      }
-    });
-  });
-}
-
-// Password Protection Logic
-const passwordModal = document.getElementById('password-modal');
-const passwordInput = document.getElementById('password-input');
-const modalSubmit = document.getElementById('modal-submit');
-const modalCancel = document.getElementById('modal-cancel');
-const resumeTriggers = document.querySelectorAll('.js-resume-trigger');
-
-function openModal(e) {
-  e.preventDefault();
-  passwordModal.classList.add('active');
-  passwordInput.value = '';
-  passwordInput.focus();
-}
-
-function closeModal() {
-  passwordModal.classList.remove('active');
-}
-
-function checkPassword() {
-  const password = passwordInput.value;
-  if (password === 'Kaushik@124') {
-    window.open('Kaushik Vada Resume.pdf', '_blank');
-    closeModal();
-  } else {
-    alert('Incorrect password. Please try again.');
-    passwordInput.value = '';
-    passwordInput.focus();
+    item.innerHTML = `
+        <div class="liquidGlass-text">
+          <div class="skills-card-content">
+            <h3>${titles[key] || key}</h3>
+            <p>${value}</p>
+          </div>
+        </div>
+      `;
+    grid.appendChild(item);
   }
 }
 
-if (passwordModal) {
-  resumeTriggers.forEach(trigger => {
-    trigger.addEventListener('click', openModal);
-  });
+function renderEducation() {
+  const list = document.getElementById('education-list');
+  if (!list) return;
 
-  modalSubmit.addEventListener('click', checkPassword);
+  list.innerHTML = '';
 
-  modalCancel.addEventListener('click', closeModal);
+  const e = profile.education;
+  const item = document.createElement('div');
+  item.className = 'liquidGlass-wrapper exp-item-glass';
 
-  passwordInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') checkPassword();
-  });
+  const detailsHtml = e.details.map(d => `<li>${d}</li>`).join('');
 
-  // Close when clicking outside content
-  passwordModal.addEventListener('click', (e) => {
-    if (e.target === passwordModal) closeModal();
+  item.innerHTML = `
+      <div class="liquidGlass-text">
+        <div class="exp-item-content">
+          <h4>${e.school}</h4>
+          <div class="exp-company">${e.degree}</div>
+          <div class="exp-date">${e.date}</div>
+          <ul>
+            ${detailsHtml}
+          </ul>
+        </div>
+      </div>
+    `;
+  list.appendChild(item);
+}
+
+
+// Liquid Glass Hover Effects
+function initHoverEffects() {
+  document.querySelectorAll('.liquidGlass-wrapper').forEach(glass => {
+    glass.addEventListener('mouseenter', () => {
+      gsap.to(glass, {
+        scale: 1.02,
+        duration: 0.4,
+        ease: "power2.out"
+      });
+    });
+
+    glass.addEventListener('mouseleave', () => {
+      gsap.to(glass, {
+        scale: 1,
+        duration: 0.4,
+        ease: "power2.out"
+      });
+    });
   });
 }
+
+// Init Content
+document.addEventListener("DOMContentLoaded", () => {
+
+  // Load Displacement Map for Crystal Glass Filter
+  const glassImage = document.getElementById('glass-map-image');
+  if (glassImage) {
+    // Use local asset for reliability
+    glassImage.setAttribute('href', 'assets/glass-map.png');
+  }
+
+  // Ensure Lenis is running
+  requestAnimationFrame(raf);
+
+  // Render all content
+  renderProjects();
+  renderExperience();
+  renderSkills();
+  renderEducation();
+
+  initHoverEffects();
+
+  if (window.feather) feather.replace();
+
+  // GSAP Animations - SIMPLIFIED
+  if (window.gsap && window.ScrollTrigger) {
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Parallax for gradient orbs
+    gsap.to(".orb-1", {
+      scrollTrigger: {
+        trigger: ".hero",
+        start: "top top",
+        end: "bottom top",
+        scrub: 1
+      },
+      y: 200,
+      scale: 1.2
+    });
+  }
+
+  // Remove loading class
+  document.body.classList.remove('is-loading');
+});
