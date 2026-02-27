@@ -45,8 +45,6 @@ body {
   font-size: 16px;
   line-height: 1.6;
   overflow-x: hidden;
-  cursor: none;
-  /* Custom cursor */
 }
 
 /* Custom Cursor */
@@ -115,6 +113,7 @@ h4 {
 .section {
   padding: 120px 0;
   position: relative;
+  scroll-margin-top: 100px;
 }
 
 @keyframes floatBG {
@@ -137,51 +136,88 @@ h4 {
   }
 }
 
-/* CRYSTAL GLASS STYLES - Replaces Liquid Glass */
+/* LIQUID GLASS STYLES */
+@keyframes glass-sweep {
+  0%, 100% { background-position: 220% 0; opacity: 0.5; }
+  45%       { background-position: -20%  0; opacity: 1;   }
+  55%       { background-position: -60%  0; opacity: 1;   }
+}
+
 .liquidGlass-wrapper {
   position: relative;
   display: flex;
   font-weight: 600;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 
-  /* Crystal Glass Effect */
-  background: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0.05) 50%,
-      rgba(255, 255, 255, 0.01) 100%);
-  backdrop-filter: url(#glass);
-  /* Applies the displacement map */
-  -webkit-backdrop-filter: url(#glass);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  /* Glass body — very thin tint so the blur+refraction reads clearly */
+  background: rgba(255, 255, 255, 0.055);
+  /* url(#glass) applies the animated SVG displacement map — real pixel-bending refraction */
+  backdrop-filter: url(#glass) blur(6px) saturate(180%) brightness(1.03);
+  -webkit-backdrop-filter: blur(6px) saturate(180%) brightness(1.03); /* Safari fallback */
 
-  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.10),
+    0 8px 32px  rgba(0, 0, 0, 0.28),
+    0 2px 6px   rgba(0, 0, 0, 0.14),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px  0 rgba(0, 0, 0, 0.12),
+    inset 1px  0 0 rgba(255, 255, 255, 0.07),
+    inset -1px 0 0 rgba(255, 255, 255, 0.04);
+
+  transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Top-left specular highlight — the crispest glass glint */
+.liquidGlass-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(148deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.08) 24%, transparent 50%),
+    linear-gradient(330deg, rgba(180, 210, 255, 0.07) 0%, transparent 48%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Animated light sweep — glass is alive */
+.liquidGlass-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    108deg,
+    transparent       25%,
+    rgba(255,255,255,0.055) 44%,
+    rgba(255,255,255,0.11)  50%,
+    rgba(255,255,255,0.055) 56%,
+    transparent       75%
+  );
+  background-size: 250% 100%;
+  animation: glass-sweep 9s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .liquidGlass-wrapper:hover {
-  transform: translateY(-5px) scale(1.01);
-  background: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.15) 0%,
-      rgba(255, 255, 255, 0.08) 50%,
-      rgba(255, 255, 255, 0.02) 100%);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-}
-
-/* Inner elements are no longer needed for the background effect, 
-   but we keep them hidden just in case app.js hasn't updated yet 
-   or if we want to add specific internal highlights later. */
-.liquidGlass-effect,
-.liquidGlass-tint,
-.liquidGlass-shine {
-  display: none;
+  transform: translateY(-4px) scale(1.008);
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.26);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.14),
+    0 22px 60px rgba(0, 0, 0, 0.40),
+    0 4px 12px  rgba(0, 0, 0, 0.18),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.48),
+    inset 0 -1px  0 rgba(0, 0, 0, 0.08);
 }
 
 .liquidGlass-text {
   z-index: 3;
   position: relative;
   width: 100%;
-  /* Ensure content takes full width */
 }
 
 /* NAVIGATION LIQUID GLASS */
@@ -232,12 +268,32 @@ h4 {
   color: #ffffff;
 }
 
+.nav-glass:hover {
+  transform: translateX(-50%);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.12),
+    0 14px 44px rgba(0, 0, 0, 0.34),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+}
+
 .nav-glass .btn-contact {
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.1rem;
   border-radius: 1.5rem;
   font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.nav-glass .btn-contact:hover {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
 }
 
 /* PROJECT CARD LIQUID GLASS */
@@ -284,6 +340,8 @@ h4 {
   padding-left: 1.2rem;
   color: #e2e8f0;
   line-height: 1.6;
+  list-style-type: disc;
+  list-style-position: outside;
 }
 
 .project-card-content li,
@@ -375,6 +433,7 @@ h4 {
 .footer-glass {
   border-radius: 2rem 2rem 0 0;
   margin-top: 4rem;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .footer-glass,
@@ -382,6 +441,16 @@ h4 {
   border-radius: 2rem 2rem 0 0;
 }
 
+
+/* Chip background canvas */
+#chip-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
 
 /* Hero */
 .hero {
@@ -540,7 +609,7 @@ h4 {
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 600;
   margin-bottom: 3rem;
-  color: #1a1a1a;
+  color: #ffffff;
   letter-spacing: -0.02em;
 }
 
@@ -553,7 +622,7 @@ h4 {
 }
 
 .footer-link {
-  color: #333;
+  color: #bdc3cd;
   text-decoration: none;
   font-weight: 500;
   font-size: 1.1rem;
@@ -562,12 +631,12 @@ h4 {
 }
 
 .footer-link:hover {
-  color: #000;
+  color: #ffffff;
   transform: translateY(-2px);
 }
 
 .copyright {
-  color: #666;
+  color: #7a8290;
   font-size: 0.9rem;
 }
 
@@ -595,5 +664,35 @@ h4 {
   .sticky-side {
     position: relative;
     top: 0;
+    margin-bottom: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-glass {
+    width: 95%;
+    padding: 0.8rem 1rem;
+    top: 10px;
+  }
+
+  .nav-glass .liquidGlass-text {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .nav-glass .nav-links {
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav-glass .btn-contact {
+    display: none;
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 10vw, 4rem);
   }
 }
