@@ -3,149 +3,142 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
 const LAYER_COLORS = [
-  0x4fc3f7, // M1  — sky blue
-  0xba68c8, // M2  — purple
-  0x4db6ac, // M3  — teal
-  0xff8a65, // M4  — coral
-  0x7986cb, // M5  — indigo
-  0xaed581, // M6  — lime
-  0xf06292, // Via — pink
-  0xffd54f, // Pad — gold
-  0x90a4ae, // Sub — steel
-  0xe0e0e0, // Bnd — silver
+  0x4fc3f7, 0xba68c8, 0x4db6ac, 0xff8a65,
+  0x7986cb, 0xaed581, 0xf06292, 0xffd54f,
+  0x90a4ae, 0xe0e0e0,
 ];
-
-// ── Module-level model cache ─────────────────────────────────────────────────
-// The model is processed exactly once and kept alive so re-opening the modal
-// costs zero download time and zero parse time.
-let _model    = null;  // THREE.Group — ready to add to any scene
-let _loading  = true;
-let _progress = 0;     // 0–100, tracked even before the modal exists
-let _waiters  = [];    // { attach, loadingEl } queued while model is in flight
 
 function applyLayerColors(object) {
   let idx = 0;
   object.traverse((child) => {
     if (!child.isMesh) return;
     const name = (child.name || '').toLowerCase();
-    const base = new THREE.Color(LAYER_COLORS[idx % LAYER_COLORS.length]);
-
-    if      (name.includes('via')  || name.includes('contact'))                    base.set(0xf06292);
-    else if (name.includes('pad')  || name.includes('bond'))                       base.set(0xffd54f);
-    else if (name.includes('sub')  || name.includes('bulk') || name.includes('die')) base.set(0x546e7a);
-    else if (name.includes('m1')   || name.includes('metal1')  || name.includes('metal_1')) base.set(0x4fc3f7);
-    else if (name.includes('m2')   || name.includes('metal2')  || name.includes('metal_2')) base.set(0xba68c8);
-    else if (name.includes('m3')   || name.includes('metal3')  || name.includes('metal_3')) base.set(0x4db6ac);
-    else if (name.includes('m4')   || name.includes('metal4')  || name.includes('metal_4')) base.set(0xff8a65);
-
-    const mat = new THREE.MeshPhongMaterial({
-      color:     base,
-      shininess: 80,
-      specular:  new THREE.Color(0x444444),
-      side:      THREE.DoubleSide,
-      flatShading: false,
+    const c = new THREE.Color(LAYER_COLORS[idx % LAYER_COLORS.length]);
+    if      (name.includes('via')  || name.includes('contact'))                              c.set(0xf06292);
+    else if (name.includes('pad')  || name.includes('bond'))                                 c.set(0xffd54f);
+    else if (name.includes('sub')  || name.includes('bulk')  || name.includes('die'))        c.set(0x546e7a);
+    else if (name.includes('m1')   || name.includes('metal1')  || name.includes('metal_1')) c.set(0x4fc3f7);
+    else if (name.includes('m2')   || name.includes('metal2')  || name.includes('metal_2')) c.set(0xba68c8);
+    else if (name.includes('m3')   || name.includes('metal3')  || name.includes('metal_3')) c.set(0x4db6ac);
+    else if (name.includes('m4')   || name.includes('metal4')  || name.includes('metal_4')) c.set(0xff8a65);
+    child.material = new THREE.MeshPhongMaterial({
+      color: c, shininess: 60, specular: new THREE.Color(0x333333),
+      side: THREE.DoubleSide, flatShading: false,
     });
-    child.material = Array.isArray(child.material) ? child.material.map(() => mat) : mat;
     idx++;
   });
 }
 
-// ── Kick off the FBX download the instant this module is evaluated ───────────
-// This runs as soon as the browser parses the <script type="module"> tag,
-// long before the user can scroll down and click the project card.
-(function preload() {
-  new FBXLoader().load(
-    'Final Chip.fbx',
+// ── Background preload ────────────────────────────────────────────────────────
+// Phase 1 (non-blocking):  fetch() downloads the file in the network stack.
+//                          The main thread is 100% free — scroll, animate, etc.
+// Phase 2 (idle-deferred): FBXLoader.parse() is CPU-heavy and synchronous.
+//                          We schedule it via requestIdleCallback so it only
+//                          runs when the browser has nothing else to do.
+// Result: by the time the user scrolls down and clicks the card, the model is
+//         already parsed and cached — modal open is instant.
 
-    // onLoad — process once, cache forever
-    (raw) => {
-      const box    = new THREE.Box3().setFromObject(raw);
-      const center = box.getCenter(new THREE.Vector3());
-      const size   = box.getSize(new THREE.Vector3());
-      const s      = 3 / Math.max(size.x, size.y, size.z);
-      raw.scale.setScalar(s);
-      raw.position.set(-center.x * s, -center.y * s, -center.z * s);
-      applyLayerColors(raw);
+let _model   = null;   // ready Three.js Group
+let _loading = true;
+let _waiters = [];     // callbacks queued while model is in-flight
 
-      _model   = raw;
-      _loading = false;
-      _progress = 100;
+function _parseBuffer(buffer) {
+  try {
+    const raw = new FBXLoader().parse(buffer, '');
 
-      // Resolve any modals that opened while we were loading
-      _waiters.forEach(({ attach }) => attach(_model));
-      _waiters = [];
-    },
+    const box    = new THREE.Box3().setFromObject(raw);
+    const center = box.getCenter(new THREE.Vector3());
+    const size   = box.getSize(new THREE.Vector3());
+    const s      = 3 / Math.max(size.x, size.y, size.z);
+    raw.scale.setScalar(s);
+    raw.position.set(-center.x * s, -center.y * s, -center.z * s);
+    applyLayerColors(raw);
 
-    // onProgress — update loading text even before the modal exists
-    (prog) => {
-      if (prog.total > 0) {
-        _progress = Math.round((prog.loaded / prog.total) * 100);
-        // If the modal is open and still showing the loading indicator, update it
-        document.querySelectorAll('.chip-loading').forEach((el) => {
-          if (el.style.display !== 'none') el.textContent = `Loading… ${_progress}%`;
-        });
+    _model   = raw;
+    _loading = false;
+    _waiters.forEach(fn => fn(_model, null));
+    _waiters = [];
+  } catch (err) {
+    console.error('[ChipViewer] parse error:', err);
+    _loading = false;
+    _waiters.forEach(fn => fn(null, err));
+    _waiters = [];
+  }
+}
+
+// Start the moment this module is evaluated — but the network fetch
+// never blocks the main thread (it's a background job in the browser).
+(function startPreload() {
+  fetch('Final Chip.fbx')
+    .then(r => r.arrayBuffer())
+    .then(buffer => {
+      // Defer the synchronous CPU parse to a browser-idle slot.
+      // timeout:8000 means "run it by 8s even if the browser is never idle"
+      // so it's always ready before a typical user reaches the projects section.
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => _parseBuffer(buffer), { timeout: 8000 });
+      } else {
+        // Safari fallback: yield one tick so the page paints, then parse
+        setTimeout(() => _parseBuffer(buffer), 100);
       }
-    },
-
-    // onError
-    (err) => {
-      console.error('[ChipViewer] preload failed:', err);
+    })
+    .catch(err => {
+      console.error('[ChipViewer] fetch error:', err);
       _loading = false;
-      _waiters.forEach(({ attach, loadingEl }) => {
-        if (loadingEl) { loadingEl.textContent = 'Could not load 3D model'; loadingEl.style.color = '#f87171'; }
-      });
+      _waiters.forEach(fn => fn(null, err));
       _waiters = [];
-    }
-  );
+    });
 })();
-// ────────────────────────────────────────────────────────────────────────────
+
+// ── ChipViewer class ─────────────────────────────────────────────────────────
 
 class ChipViewer {
   constructor() { this._clear(); }
 
   _clear() {
     this.scene = this.camera = this.renderer =
-    this.controls = this.animationId = this._onResize = null;
+    this.controls = this._rafId = this._onResize = this._onVis = null;
   }
 
   init(container) {
     if (!container) return;
 
-    // ── Scene ────────────────────────────────────────────────────────────
+    const mobile = window.matchMedia('(max-width: 768px)').matches ||
+                   ('ontouchstart' in window && window.innerWidth < 1024);
+    const dpr = mobile ? 1 : Math.min(window.devicePixelRatio, 1.5);
+
+    // Scene
     this.scene = new THREE.Scene();
 
-    // ── Camera — matches the screenshot: elevated 40° 3/4 top-right view ─
+    // Camera — elevated 3/4 top-right view matching target screenshot
     const w = container.clientWidth, h = container.clientHeight;
     this.camera = new THREE.PerspectiveCamera(38, w / h, 0.01, 500);
-    this.camera.position.set(2.0, 3.0, 2.8);   // ~41° elevation, ~35° azimuth
+    this.camera.position.set(2.0, 3.0, 2.8);
 
-    // ── Renderer ─────────────────────────────────────────────────────────
+    // Renderer — mobile gets lighter settings
     this.renderer = new THREE.WebGLRenderer({
-      // On high-DPI screens the native resolution already does implicit MSAA,
-      // so antialias is only worth enabling on lo-DPI (1× pixel ratio) devices.
-      antialias:       window.devicePixelRatio < 2,
-      alpha:           true,
+      antialias: !mobile,
+      alpha: true,
       powerPreference: 'high-performance',
     });
     this.renderer.setSize(w, h);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    this.renderer.setPixelRatio(dpr);
     this.renderer.toneMapping      = THREE.NoToneMapping;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(this.renderer.domElement);
 
-    // ── Controls ─────────────────────────────────────────────────────────
+    // Controls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping   = true;
-    this.controls.dampingFactor   = 0.07;
+    this.controls.dampingFactor   = 0.08;
     this.controls.autoRotate      = true;
-    this.controls.autoRotateSpeed = 0.8;   // slow, cinematic
-    this.controls.enablePan       = true;
+    this.controls.autoRotateSpeed = 0.6;
+    this.controls.enablePan       = !mobile;
     this.controls.minDistance     = 0.5;
     this.controls.maxDistance     = 15;
     this.controls.target.set(0, 0, 0);
     this.controls.update();
 
-    // Pause rotation on grab, resume after 2.5 s of inactivity
     this.renderer.domElement.addEventListener('pointerdown', () => {
       if (this.controls) this.controls.autoRotate = false;
     });
@@ -153,34 +146,40 @@ class ChipViewer {
       setTimeout(() => { if (this.controls) this.controls.autoRotate = true; }, 2500);
     });
 
-    // ── Lighting ─────────────────────────────────────────────────────────
+    // Lighting
     const key  = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(4, 8, 5);
     const fill = new THREE.DirectionalLight(0x88aaff, 1.5); fill.position.set(-5, 5, -3);
     const back = new THREE.DirectionalLight(0xffffff, 1.0); back.position.set(0, 3, -6);
     const bot  = new THREE.DirectionalLight(0x6688cc, 0.6); bot.position.set(0, -5, 0);
     this.scene.add(new THREE.AmbientLight(0xffffff, 1.8), key, fill, back, bot);
 
-    // ── Attach model ─────────────────────────────────────────────────────
+    // Attach model
     const loadingEl = container.querySelector('.chip-loading');
 
-    const attach = (model) => {
-      // Guard: if the viewer was disposed before the model arrived, bail out
-      if (!this.scene) return;
+    const attach = (model, err) => {
+      if (!this.scene) return; // viewer disposed before model arrived
+      if (err || !model) {
+        if (loadingEl) { loadingEl.textContent = 'Could not load model'; loadingEl.style.color = '#f87171'; }
+        return;
+      }
       this.scene.add(model);
       this.controls?.update();
       if (loadingEl) loadingEl.style.display = 'none';
     };
 
     if (!_loading && _model) {
-      // Model already in memory — instant
-      attach(_model);
+      attach(_model, null); // already cached — instant
     } else {
-      // Still downloading — show live progress and queue the attach
-      if (loadingEl && _progress > 0) loadingEl.textContent = `Loading… ${_progress}%`;
-      _waiters.push({ attach, loadingEl });
+      _waiters.push(attach); // queue until parse finishes
     }
 
-    // ── Resize handler ───────────────────────────────────────────────────
+    // Pause rendering when browser tab is hidden
+    this._onVis = () => {
+      if (document.hidden) this._stopRender();
+      else                 this._startRender();
+    };
+    document.addEventListener('visibilitychange', this._onVis);
+
     this._onResize = () => {
       if (!this.camera || !this.renderer) return;
       const cw = container.clientWidth, ch = container.clientHeight;
@@ -190,38 +189,41 @@ class ChipViewer {
     };
     window.addEventListener('resize', this._onResize);
 
-    this.animate();
+    this._startRender();
   }
 
-  animate() {
-    this.animationId = requestAnimationFrame(() => this.animate());
-    this.controls?.update();
-    if (this.renderer && this.scene && this.camera)
+  _startRender() {
+    if (this._rafId || !this.renderer) return;
+    const tick = () => {
+      if (!this.renderer) return;
+      this.controls?.update();
       this.renderer.render(this.scene, this.camera);
+      this._rafId = requestAnimationFrame(tick);
+    };
+    this._rafId = requestAnimationFrame(tick);
+  }
+
+  _stopRender() {
+    if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
   }
 
   dispose() {
-    if (this.animationId) cancelAnimationFrame(this.animationId);
-    if (this._onResize)   window.removeEventListener('resize', this._onResize);
-    if (this.controls)    this.controls.dispose();
+    this._stopRender();
+    if (this._onVis)    document.removeEventListener('visibilitychange', this._onVis);
+    if (this._onResize) window.removeEventListener('resize', this._onResize);
+    if (this.controls)  this.controls.dispose();
 
-    // Detach the cached model from our scene without destroying it —
-    // geometry and materials stay alive for the next open.
+    // Detach cached model from scene without destroying it
+    // (it stays in _model for the next open)
     if (this.scene && _model) this.scene.remove(_model);
 
-    // Release GPU resources for this renderer instance
     if (this.renderer) {
       this.renderer.dispose();
       this.renderer.domElement?.remove();
     }
 
-    // Remove any pending waiters that belong to this (closing) instance
-    _waiters = _waiters.filter(({ attach }) => {
-      // The closure captures `this.scene`; after _clear() it'll be null,
-      // but clean removal is safer.
-      return false; // flush all — there's only ever one viewer at a time
-    });
-
+    // Flush any pending waiters (safe — attach checks this.scene)
+    _waiters = [];
     this._clear();
   }
 }
