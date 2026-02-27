@@ -16,7 +16,7 @@
   let W, H;
 
   const PITCH   = 20;   // routing grid pitch (px) — finer = denser
-  const MAX_SIG = 48;
+  const MAX_SIG = 24;   // reduced — was 48, shadow-free particles are already vivid
 
   // EDA-style layer config (dark-background adaptation)
   const LAYER = [
@@ -174,6 +174,9 @@
 
   // ── Render ─────────────────────────────────────────────────────────────────
   function render() {
+    // Skip rendering when the tab is in the background
+    if (document.hidden) { requestAnimationFrame(render); return; }
+
     ctx.clearRect(0, 0, W, H);
 
     // Sub-PITCH grid
@@ -250,17 +253,15 @@
       const dist  = Math.sqrt(dx * dx + dy * dy);
       const boost = dist < 160 ? 1 + (1 - dist / 160) * 2.2 : 1;
 
-      ctx.save();
       const tx = isH ? px - s.trail : px;
       const ty = isH ? py           : py - s.trail;
       const g  = isH
         ? ctx.createLinearGradient(tx, py, px, py)
         : ctx.createLinearGradient(px, ty, px, py);
       g.addColorStop(0, rgba(s.clr, 0));
-      g.addColorStop(1, rgba(s.clr, 0.62 * fa * boost));
+      g.addColorStop(1, rgba(s.clr, 0.70 * fa * boost));
 
-      ctx.shadowColor = s.clr;
-      ctx.shadowBlur  = 6 * boost;
+      // No shadowBlur — it's software-rendered and ~3× more expensive per particle
       ctx.strokeStyle = g;
       ctx.lineWidth   = 2;
       ctx.beginPath();
@@ -268,12 +269,10 @@
       ctx.lineTo(px, py);
       ctx.stroke();
 
-      ctx.shadowBlur = 16 * boost;
-      ctx.fillStyle  = rgba(s.clr, Math.min(1, 0.95 * fa * boost));
+      ctx.fillStyle = rgba(s.clr, Math.min(1, 0.95 * fa * boost));
       ctx.beginPath();
-      ctx.arc(px, py, 3, 0, Math.PI * 2);
+      ctx.arc(px, py, 3.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     }
 
     if (signals.length < MAX_SIG && Math.random() < 0.08) spawnSignal();
