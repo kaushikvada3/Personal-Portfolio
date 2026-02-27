@@ -148,8 +148,22 @@ function renderProjects() {
     const item = document.createElement('div');
     item.className = 'liquidGlass-wrapper project-card-glass';
 
-    // Create the inner content
     const bulletsHtml = p.bullets.map(b => `<li>${b}</li>`).join('');
+
+    // Add "Click to explore" indicator for the Two-Level Cache project
+    const isExpandable = p.id === 'two-level-cache';
+    if (isExpandable) {
+      item.classList.add('project-card-expandable');
+    }
+
+    const exploreHtml = isExpandable ? `
+      <div class="explore-indicator">
+        <span>Click to explore</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </div>
+    ` : '';
 
     item.innerHTML = `
       <div class="liquidGlass-text">
@@ -159,12 +173,290 @@ function renderProjects() {
           <ul>
             ${bulletsHtml}
           </ul>
+          ${exploreHtml}
         </div>
       </div>
     `;
 
+    if (isExpandable) {
+      item.addEventListener('click', () => openCacheModal());
+    }
+
     list.appendChild(item);
   });
+}
+
+// ─── Two-Level Cache Detail Modal ───
+
+function getCacheDetailHTML() {
+  return `
+    <button class="modal-close-btn" aria-label="Close">&times;</button>
+
+    <div class="modal-scroll-container" data-lenis-prevent>
+
+      <!-- 3D Model Viewer -->
+      <div class="modal-viewer-section">
+        <div class="chip-viewer-container" id="chip-3d-container">
+          <div class="chip-loading" id="chip-loading">Loading 3D model...</div>
+        </div>
+        <div class="viewer-hint">Drag to rotate &middot; Scroll to zoom &middot; Right-click to pan</div>
+      </div>
+
+      <!-- Project Header -->
+      <div class="modal-header">
+        <span class="project-tech">Verilog &middot; Caches &middot; Jan 2025</span>
+        <h2>Two-Level Cache RTL (L1/L2)</h2>
+        <p class="modal-subtitle">A fully synthesizable two-level cache memory system in Verilog, designed to bridge the speed gap between a fast processor and slow main memory — addressing the classic "memory wall" problem.</p>
+      </div>
+
+      <!-- Architecture Spec Cards -->
+      <div class="spec-grid">
+        <div class="spec-card">
+          <div class="spec-label">L1 Cache</div>
+          <div class="spec-value">4 KB</div>
+          <div class="spec-detail">64 Sets &times; 4 Ways &times; 16B</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-label">L2 Cache</div>
+          <div class="spec-value">32 KB</div>
+          <div class="spec-detail">128 Sets &times; 8 Ways &times; 32B</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-label">L1 Associativity</div>
+          <div class="spec-value">4-Way</div>
+          <div class="spec-detail">Set-Associative</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-label">L2 Associativity</div>
+          <div class="spec-value">8-Way</div>
+          <div class="spec-detail">Set-Associative</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-label">Write Policy</div>
+          <div class="spec-value">Write-Back</div>
+          <div class="spec-detail">Write-Allocate</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-label">Replacement</div>
+          <div class="spec-value">LRU</div>
+          <div class="spec-detail">Exact Matrix / Rank</div>
+        </div>
+      </div>
+
+      <!-- Key Design Decisions -->
+      <div class="detail-section">
+        <h3>Key Design Decisions</h3>
+        <div class="decision-item">
+          <strong>Split L1/L2 Hierarchy</strong>
+          <p>L1 is optimized for low-latency access (fast hit time), while L2 provides a larger backing store to minimize costly off-chip memory accesses. This separation balances speed and capacity.</p>
+        </div>
+        <div class="decision-item">
+          <strong>Set-Associative Placement</strong>
+          <p>4-way associativity for L1 and 8-way for L2 reduces conflict misses compared to direct-mapped caches while keeping hardware complexity manageable.</p>
+        </div>
+        <div class="decision-item">
+          <strong>LRU Replacement Policy</strong>
+          <p>Implemented using exact matrix or rank-based logic to maximize hit rates by retaining temporally local data. The accessed way becomes MRU (rank 0), and all others are incremented.</p>
+        </div>
+        <div class="decision-item">
+          <strong>Write-Back with Write-Allocate</strong>
+          <p>Reduces bus bandwidth by only writing dirty cache lines to the lower level upon eviction, rather than on every store operation (as in Write-Through).</p>
+        </div>
+        <div class="decision-item">
+          <strong>Blocking Cache Behavior</strong>
+          <p>The CPU stalls on an L1 miss until the line is fully refilled. Backpressure naturally propagates: if Memory is busy, L2 waits, so L1 waits, stalling the CPU.</p>
+        </div>
+      </div>
+
+      <!-- FSM Control Flow -->
+      <div class="detail-section">
+        <h3>FSM Control Flow</h3>
+        <p>The cache controller transitions through these states to resolve hits and misses:</p>
+        <div class="fsm-flow">
+          <span class="fsm-state">IDLE</span>
+          <span class="fsm-arrow">&rarr;</span>
+          <span class="fsm-state">CHECK_HIT</span>
+          <span class="fsm-arrow">&rarr;</span>
+          <span class="fsm-state fsm-branch">Hit?</span>
+        </div>
+        <div class="fsm-flow" style="margin-left: 1rem;">
+          <span class="fsm-arrow">Yes &rarr;</span>
+          <span class="fsm-state">UPDATE_LRU</span>
+          <span class="fsm-arrow">&rarr;</span>
+          <span class="fsm-state">Ready</span>
+        </div>
+        <div class="fsm-flow" style="margin-left: 1rem;">
+          <span class="fsm-arrow">No &rarr;</span>
+          <span class="fsm-state">MISS_SELECT</span>
+          <span class="fsm-arrow">&rarr;</span>
+          <span class="fsm-state">WRITEBACK?</span>
+          <span class="fsm-arrow">&rarr;</span>
+          <span class="fsm-state">MEM_READ</span>
+          <span class="fsm-arrow">&rarr;</span>
+          <span class="fsm-state">REFILL</span>
+          <span class="fsm-arrow">&rarr;</span>
+          <span class="fsm-state">UPDATE_LRU</span>
+        </div>
+        <ul style="margin-top: 1rem;">
+          <li><strong>MISS_SELECT:</strong> Scans <code>lru_array</code> to find the LRU victim way.</li>
+          <li><strong>MISS_WRITEBACK:</strong> If the victim is dirty, writes it back to L2 before fetching new data.</li>
+          <li><strong>MISS_MEM_READ:</strong> Requests the missing line from L2 (or main memory).</li>
+          <li><strong>REFILL:</strong> Captures incoming data, updates tag/valid, clears the dirty bit.</li>
+          <li><strong>UPDATE_LRU:</strong> Promotes the accessed way to MRU. For write-miss (Write-Allocate), the pending write is performed here.</li>
+        </ul>
+      </div>
+
+      <!-- Address Decomposition -->
+      <div class="detail-section">
+        <h3>Address Decomposition</h3>
+        <p>The 32-bit physical address is decomposed differently for each cache level:</p>
+        <div class="addr-table-wrapper">
+          <table class="addr-table">
+            <thead>
+              <tr><th>Field</th><th>L1 Bits</th><th>L2 Bits</th><th>Purpose</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Offset</td><td>[3:0]</td><td>[4:0]</td><td>Byte select within cache line</td></tr>
+              <tr><td>Index</td><td>[9:4]</td><td>[11:5]</td><td>Set selection</td></tr>
+              <tr><td>Tag</td><td>[31:10]</td><td>[31:12]</td><td>Unique identifier for hit/miss</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Performance -->
+      <div class="detail-section">
+        <h3>Performance Analysis</h3>
+        <div class="perf-grid">
+          <div class="perf-item">
+            <div class="perf-label">L1 Hit</div>
+            <div class="perf-value">~2 cycles</div>
+            <div class="perf-desc">1 cycle Req + Tag Check, 1 cycle Data availability</div>
+          </div>
+          <div class="perf-item">
+            <div class="perf-label">L1 Miss / L2 Hit</div>
+            <div class="perf-value">~6-8 cycles</div>
+            <div class="perf-desc">L1 latency + L2 latency (~3 cycles) + transfer</div>
+          </div>
+          <div class="perf-item">
+            <div class="perf-label">L2 Miss / Mem</div>
+            <div class="perf-value">~15+ cycles</div>
+            <div class="perf-desc">Full hierarchy traversal + 5-cycle memory latency</div>
+          </div>
+        </div>
+        <p style="margin-top: 1rem;">The critical timing path is <strong>Tag Comparison</strong>: reading tags from registers and comparing against the input address in a single cycle limits frequency. In high-speed designs, tag access and comparison would be pipelined across multiple stages.</p>
+      </div>
+
+      <!-- System Integration -->
+      <div class="detail-section">
+        <h3>System Integration</h3>
+        <p>The <code>system_top.v</code> module wires the complete hierarchy using a valid/ready handshake protocol:</p>
+        <div class="fsm-flow" style="margin: 1rem 0;">
+          <span class="fsm-state">CPU Stub</span>
+          <span class="fsm-arrow">&rarr;</span>
+          <span class="fsm-state">L1 Cache</span>
+          <span class="fsm-arrow">&rarr;</span>
+          <span class="fsm-state">L2 Cache</span>
+          <span class="fsm-arrow">&rarr;</span>
+          <span class="fsm-state">Memory Model</span>
+        </div>
+        <ul>
+          <li>Synchronous global reset initializes all FSMs to IDLE and clears latency counters.</li>
+          <li>L2 simulates additional latency with a 2-cycle delay counter in CHECK_HIT.</li>
+          <li>The memory model mandates a 5-cycle wait for every access, modeling off-chip DRAM latency.</li>
+        </ul>
+      </div>
+
+      <!-- Verification -->
+      <div class="detail-section">
+        <h3>Verification Strategy</h3>
+        <div class="decision-item">
+          <strong>L1 Unit Testbench (tb_cache_l1.v)</strong>
+          <p>Validates L1 in isolation — cold miss (write to empty cache), read hit (verifying data retention and tag match), with mock memory manually asserting mem_ready to simulate L2 responses.</p>
+        </div>
+        <div class="decision-item">
+          <strong>Full System Testbench (tb_system.v)</strong>
+          <p>End-to-end simulation via cpu_stub running traffic patterns: Write 0x1000 (Miss + Alloc), Read 0x1000 (Hit), Write 0x2000 (potential conflict if mapped to the same set), and data integrity verification.</p>
+        </div>
+        <div class="decision-item">
+          <strong>Tools</strong>
+          <p>Developed directed verification tests in Synopsys VCS to stress hit/miss paths. Debugged behavior using Verdi by instrumenting hit/miss counters, tracing tag/LRU updates, and inspecting waveforms.</p>
+        </div>
+      </div>
+
+      <!-- Synthesis -->
+      <div class="detail-section">
+        <h3>Synthesis Considerations</h3>
+        <p>The logic for tag comparison, LRU updates, and FSM control is <strong>fully synthesizable</strong>. The storage arrays (Data/Tag RAMs) are modeled as registers for simulation but would map to <strong>SRAM hard macros</strong> in a production physical design flow. Parameter sweeps under varying associativities and line sizes were used to analyze timing and throughput trade-offs.</p>
+      </div>
+
+    </div>
+  `;
+}
+
+function openCacheModal() {
+  // Prevent background scroll
+  if (typeof lenis !== 'undefined') lenis.stop();
+
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'project-modal-overlay';
+  overlay.id = 'cache-modal';
+
+  const modal = document.createElement('div');
+  modal.className = 'project-modal liquidGlass-wrapper';
+  modal.innerHTML = getCacheDetailHTML();
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    overlay.classList.add('active');
+  });
+
+  // Init 3D viewer after DOM is ready
+  setTimeout(() => {
+    const container = document.getElementById('chip-3d-container');
+    if (container && window.ChipViewer) {
+      window.ChipViewer.init(container);
+    }
+  }, 100);
+
+  // Close handlers
+  const closeBtn = modal.querySelector('.modal-close-btn');
+  closeBtn.addEventListener('click', closeCacheModal);
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeCacheModal();
+  });
+
+  document.addEventListener('keydown', handleModalEsc);
+}
+
+function closeCacheModal() {
+  const overlay = document.getElementById('cache-modal');
+  if (!overlay) return;
+
+  overlay.classList.remove('active');
+
+  // Dispose 3D viewer
+  if (window.ChipViewer) {
+    window.ChipViewer.dispose();
+  }
+
+  // Remove after animation
+  setTimeout(() => {
+    overlay.remove();
+  }, 400);
+
+  // Resume background scroll
+  if (typeof lenis !== 'undefined') lenis.start();
+
+  document.removeEventListener('keydown', handleModalEsc);
+}
+
+function handleModalEsc(e) {
+  if (e.key === 'Escape') closeCacheModal();
 }
 
 function renderExperience() {

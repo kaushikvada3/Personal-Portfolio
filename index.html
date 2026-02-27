@@ -18,6 +18,16 @@
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 
   <link rel="stylesheet" href="src/styles/main.css">
+
+  <!-- Three.js Import Map for 3D Model Viewer -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
 </head>
 
 <body class="is-loading">
@@ -163,6 +173,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
   <script src="src/js/chip-bg.js"></script>
   <script src="src/js/app.js"></script>
+  <script type="module" src="src/js/chip-viewer.js"></script>
 
 </body>
 
