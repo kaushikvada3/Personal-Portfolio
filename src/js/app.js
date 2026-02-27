@@ -414,13 +414,11 @@ function openCacheModal() {
     overlay.classList.add('active');
   });
 
-  // Init 3D viewer after DOM is ready
-  setTimeout(() => {
-    const container = document.getElementById('chip-3d-container');
-    if (container && window.ChipViewer) {
-      window.ChipViewer.init(container);
-    }
-  }, 100);
+  // Init 3D viewer — model is pre-cached, so this is instant
+  const container = document.getElementById('chip-3d-container');
+  if (container && window.ChipViewer) {
+    window.ChipViewer.init(container);
+  }
 
   // Close handlers
   const closeBtn = modal.querySelector('.modal-close-btn');
