@@ -252,6 +252,9 @@ class ChipViewer {
       this.scene.add(model);
       this.controls?.update();
       if (loadingEl) loadingEl.style.display = 'none';
+
+      // ── Cinematic intro transition ──────────────────────────────────────
+      this._playCinematicIntro();
     };
 
     if (!_loading && _model) {
@@ -278,6 +281,69 @@ class ChipViewer {
     window.addEventListener('resize', this._onResize);
 
     this._startRender();
+  }
+
+  _playCinematicIntro() {
+    if (!this.camera || !this.controls) return;
+
+    const cam = this.camera;
+    const ctrl = this.controls;
+    const target = new THREE.Vector3(0, 0, 0); // model is centered
+
+    // ── State A: street-level, near chip surface ──────────────────────────
+    // Low Y (barely above the chip deck), offset to one side for drama
+    const startPos = { x: 0.9, y: 0.06, z: 1.6 };
+
+    // ── State B: bird's-eye, centered overhead ────────────────────────────
+    // High Y, centered XZ, looking almost straight down
+    // (z offset of 0.001 avoids gimbal lock at exactly 0°)
+    const endPos = { x: 0.0, y: 5.2, z: 0.001 };
+
+    // Place camera at start immediately (before first render tick)
+    cam.position.set(startPos.x, startPos.y, startPos.z);
+    cam.lookAt(target);
+
+    // Lock out user interaction during the cinematic
+    ctrl.enabled = false;
+    ctrl.autoRotate = false;
+
+    // Current proxy position for GSAP to mutate
+    const proxy = { x: startPos.x, y: startPos.y, z: startPos.z };
+
+    const gsap = window.gsap;
+    if (!gsap) {
+      // Fallback: skip cinematic, go straight to normal view
+      cam.position.set(2.0, 3.0, 2.8);
+      cam.lookAt(target);
+      ctrl.enabled = true;
+      ctrl.autoRotate = true;
+      ctrl.update();
+      return;
+    }
+
+    gsap.to(proxy, {
+      x: endPos.x,
+      y: endPos.y,
+      z: endPos.z,
+      duration: 2.8,
+      ease: 'power2.inOut',
+      delay: 0.3, // brief pause so user sees the street-level start
+
+      onUpdate: () => {
+        cam.position.set(proxy.x, proxy.y, proxy.z);
+        cam.lookAt(target); // continuous lookAt = natural downward tilt
+      },
+
+      onComplete: () => {
+        // Sync OrbitControls to the camera's landed position so they
+        // don't snap when re-enabled
+        ctrl.target.copy(target);
+        ctrl.object.position.set(endPos.x, endPos.y, endPos.z);
+        ctrl.update();
+        ctrl.enabled = true;
+        ctrl.autoRotate = true; // resume gentle auto-spin from top-down view
+      },
+    });
   }
 
   _startRender() {
