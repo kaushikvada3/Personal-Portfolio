@@ -150,6 +150,7 @@ let teardownPreloadScheduled = false;
 let teardownPreloadStarted = false;
 let modalStylesPromise = null;
 let activeModalToken = 0;
+const TEARDOWN_MODULE_VERSION = '20260305-4';
 
 function shouldSkipBackgroundTeardownPreload() {
   const saveData = !!(networkConnection && networkConnection.saveData);
@@ -188,7 +189,7 @@ function ensureModalStylesLoaded() {
 
 function loadTeardownModule() {
   if (teardownModulePromise) return teardownModulePromise;
-  teardownModulePromise = import('./chip-teardown.js').then((mod) => {
+  teardownModulePromise = import(`./chip-teardown.js?v=${TEARDOWN_MODULE_VERSION}`).then((mod) => {
     teardownModule = mod;
     return mod;
   }).catch((err) => {
