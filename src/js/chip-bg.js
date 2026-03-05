@@ -12,11 +12,27 @@
   const canvas = document.getElementById('chip-canvas');
   if (!canvas) return;
 
+  function detectPerfMode() {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lowMemory = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 4;
+    const lowCpu = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 4;
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const saveData = !!(connection && connection.saveData);
+    const slowNetwork = !!(connection && typeof connection.effectiveType === 'string' &&
+      /(^2g$|^slow-2g$|^3g$)/i.test(connection.effectiveType));
+    return (reducedMotion || lowMemory || lowCpu || saveData || slowNetwork) ? 'lite' : 'full';
+  }
+
+  const perfMode = document.body.dataset.perfMode || detectPerfMode();
+  if (!document.body.dataset.perfMode) document.body.dataset.perfMode = perfMode;
+  const isLiteMode = perfMode === 'lite';
+
   const ctx = canvas.getContext('2d');
   let W, H;
 
-  const PITCH = 20;   // routing grid pitch (px)
-  const MAX_SIG = 60;   // max simultaneous signal particles
+  const PITCH = isLiteMode ? 28 : 22;
+  const TARGET_FPS = isLiteMode ? 20 : 30;
+  const FRAME_MS = 1000 / TARGET_FPS;
 
   // EDA-style layer config
   const LAYER = [
@@ -40,12 +56,16 @@
   let mouse = { x: -1, y: -1 };
   let gridSnap = { x: -1, y: -1 };  // nearest grid intersection to cursor
   let scanY = -1, scanElapsed = 0, scanInterval = 11;
+  let rafId = 0;
+  let isRendering = false;
+  let isHeroVisible = true;
+  let lastFrameTime = 0;
 
   // ── Resize ─────────────────────────────────────────────────────────────────
   function resize() {
     W = canvas.parentElement.offsetWidth;
     H = canvas.parentElement.offsetHeight;
-    const dpr = Math.min(devicePixelRatio, 2);
+    const dpr = Math.min(devicePixelRatio, isLiteMode ? 1.2 : 1.5);
     if (ctx.resetTransform) ctx.resetTransform();
     else ctx.setTransform(1, 0, 0, 1, 0, 0);
     canvas.width = W * dpr;
@@ -138,49 +158,11 @@
     }
   }
 
-  // ── Spawn signal particle on a specific route ──────────────────────────────
-  function spawnOnRoute(rt, brightness) {
-    if (!rt || rt.li === 3) return;
-    const isH = rt.li !== 1;
-    const len = isH ? rt.x2 - rt.x1 : rt.y2 - rt.y1;
-    if (len < PITCH * 2) return;
-    signals.push({
-      rt,
-      t: 0,
-      spd: (0.9 + Math.random() * 1.8) / len,
-      clr: LAYER[rt.li].sig,
-      trail: 18 + Math.random() * 28,
-      brightness: brightness || 1.0,
-    });
-  }
-
-  // ── Spawn signals radiating outward from the nearest grid node ────────────
-  function spawnFromGrid(gx, gy) {
-    if (signals.length >= MAX_SIG) return;
-
-    const SNAP_R = PITCH * 1.5;
-    const nearby = routes.filter(rt => {
-      if (rt.li === 3) return false;
-      const isH = rt.li !== 1;
-      if (isH) {
-        return Math.abs(rt.y - gy) < SNAP_R && rt.x1 <= gx + SNAP_R && rt.x2 >= gx - SNAP_R;
-      } else {
-        return Math.abs(rt.x - gx) < SNAP_R && rt.y1 <= gy + SNAP_R && rt.y2 >= gy - SNAP_R;
-      }
-    });
-
-    const toSpawn = Math.min(4, MAX_SIG - signals.length);
-    for (let i = 0; i < toSpawn && nearby.length; i++) {
-      const rt = nearby[Math.floor(Math.random() * nearby.length)];
-      spawnOnRoute(rt, 1.8);
-    }
-  }
-
-  // ── Ambient spawn (no mouse active) ───────────────────────────────────────
-  function spawnAmbient() {
-    const rt = routes[Math.floor(Math.random() * routes.length)];
-    spawnOnRoute(rt, 0.6);
-  }
+  // ── Mouse tracking for sophisticated Parallax Pan ────────────────────────
+  let targetPanX = 0;
+  let targetPanY = 0;
+  let currentPanX = 0;
+  let currentPanY = 0;
 
   // ── Fade: dims the left portion (behind hero text) ─────────────────────────
   function fade(x) {
@@ -197,48 +179,64 @@
       `${Math.max(0, Math.min(1, a))})`;
   }
 
+  function setRenderActive(shouldRender) {
+    if (shouldRender) {
+      if (isRendering) return;
+      isRendering = true;
+      lastFrameTime = 0;
+      rafId = requestAnimationFrame(render);
+      return;
+    }
+    if (!isRendering) return;
+    isRendering = false;
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
-  function render() {
-    if (document.hidden) { requestAnimationFrame(render); return; }
+  function render(now) {
+    if (!isRendering) return;
+    if (!lastFrameTime) lastFrameTime = now;
+    const deltaMs = now - lastFrameTime;
+    if (deltaMs < FRAME_MS) {
+      rafId = requestAnimationFrame(render);
+      return;
+    }
+    lastFrameTime = now - (deltaMs % FRAME_MS);
+    const deltaSeconds = deltaMs / 1000;
 
     ctx.clearRect(0, 0, W, H);
 
+    // Apply ultra-smooth lerp for Apple-style parallax float
+    currentPanX += (targetPanX - currentPanX) * 0.04;
+    currentPanY += (targetPanY - currentPanY) * 0.04;
+
+    ctx.save();
+    ctx.translate(currentPanX, currentPanY);
+
     // Background grid
     ctx.lineWidth = 0.4;
-    ctx.strokeStyle = 'rgba(80,120,255,0.04)';
-    for (let x = 0; x <= W; x += PITCH) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    for (let x = -W; x <= W * 2; x += PITCH) {
+      ctx.beginPath(); ctx.moveTo(x, -H); ctx.lineTo(x, H * 2); ctx.stroke();
     }
-    for (let y = 0; y <= H; y += PITCH) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    }
-
-    // Highlight ring + crosshair at the snapped grid node
-    if (gridSnap.x >= 0) {
-      const gx = gridSnap.x, gy = gridSnap.y;
-      ctx.beginPath();
-      ctx.arc(gx, gy, 5, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(147,197,253,0.40)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      ctx.strokeStyle = 'rgba(147,197,253,0.22)';
-      ctx.lineWidth = 0.6;
-      ctx.beginPath(); ctx.moveTo(gx - 12, gy); ctx.lineTo(gx + 12, gy); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(gx, gy - 12); ctx.lineTo(gx, gy + 12); ctx.stroke();
+    for (let y = -H; y <= H * 2; y += PITCH) {
+      ctx.beginPath(); ctx.moveTo(-W, y); ctx.lineTo(W * 2, y); ctx.stroke();
     }
 
     // Standard-cell outlines + labels
     ctx.lineWidth = 0.5;
     cellRects.forEach(cr => {
       const fa = fade(cr.x + cr.w * 0.5);
-      const ao = fa * 0.09;
+      const ao = fa * 0.12;
       if (ao < 0.003) return;
-      ctx.strokeStyle = rgba('#d946ef', ao);
+      ctx.strokeStyle = rgba('#ffffff', ao);
       ctx.strokeRect(cr.x + 0.5, cr.y + 0.5, cr.w - 1, cr.h - 1);
-      if (fa > 0.45 && cr.w > PITCH * 2.5) {
+      if (!isLiteMode && fa > 0.45 && cr.w > PITCH * 2.5) {
         ctx.font = '5.5px "SF Mono", "Courier New", monospace';
-        ctx.fillStyle = rgba('#d946ef', fa * 0.22);
+        ctx.fillStyle = rgba('#ffffff', fa * 0.25);
         ctx.fillText(`(${cr.name})`, cr.x + 3, cr.y + cr.h - 3);
       }
     });
@@ -248,19 +246,20 @@
       const isH = rt.li !== 1;
       const cx = isH ? (rt.x1 + rt.x2) * 0.5 : rt.x;
       const fa = fade(cx);
-      const a = fa * (rt.li === 3 ? 0.14 : 0.19);
+      const a = fa * (rt.li === 3 ? 0.18 : 0.24);
       if (a < 0.004) return;
 
-      ctx.strokeStyle = rgba(LAYER[rt.li].hex, a);
+      // Make all traces look like subtle metallic highlights
+      ctx.strokeStyle = rgba('#ffffff', a);
       ctx.lineWidth = LAYER[rt.li].lw;
       ctx.beginPath();
       if (isH) { ctx.moveTo(rt.x1, rt.y); ctx.lineTo(rt.x2, rt.y); }
       else { ctx.moveTo(rt.x, rt.y1); ctx.lineTo(rt.x, rt.y2); }
       ctx.stroke();
 
-      if (rt.label && rt.li === 0 && fa > 0.55 && (rt.x2 - rt.x1) > PITCH * 5) {
+      if (!isLiteMode && rt.label && rt.li === 0 && fa > 0.55 && (rt.x2 - rt.x1) > PITCH * 5) {
         ctx.font = '6px "SF Mono", "Courier New", monospace';
-        ctx.fillStyle = rgba(LAYER[0].hex, fa * 0.42);
+        ctx.fillStyle = rgba('#ffffff', fa * 0.5);
         ctx.fillText(`(${rt.label})`, rt.x1 + 4, rt.y - 2);
       }
     });
@@ -269,100 +268,67 @@
     vias.forEach(v => {
       const fa = fade(v.x);
       if (fa < 0.08) return;
-      ctx.fillStyle = rgba('#ffffff', fa * 0.45);
+      ctx.fillStyle = rgba('#ffffff', fa * 0.55);
       ctx.fillRect(v.x - 1.5, v.y - 1.5, 3, 3);
     });
 
-    // Signal particles
-    for (let i = signals.length - 1; i >= 0; i--) {
-      const s = signals[i];
-      s.t += s.spd;
-      if (s.t >= 1) { signals.splice(i, 1); continue; }
+    ctx.restore();
 
-      const rt = s.rt;
-      const isH = rt.li !== 1;
-      const px = isH ? rt.x1 + s.t * (rt.x2 - rt.x1) : rt.x;
-      const py = isH ? rt.y : rt.y1 + s.t * (rt.y2 - rt.y1);
-      const fa = fade(px);
-      if (fa < 0.06) continue;
-
-      const brt = s.brightness || 1.0;
-      const tx = isH ? px - s.trail : px;
-      const ty = isH ? py : py - s.trail;
-      const g = isH
-        ? ctx.createLinearGradient(tx, py, px, py)
-        : ctx.createLinearGradient(px, ty, px, py);
-      g.addColorStop(0, rgba(s.clr, 0));
-      g.addColorStop(1, rgba(s.clr, Math.min(1, 0.70 * fa * brt)));
-
-      ctx.strokeStyle = g;
-      ctx.lineWidth = isH ? 2 : 1.5;
-      ctx.beginPath();
-      ctx.moveTo(tx, ty);
-      ctx.lineTo(px, py);
-      ctx.stroke();
-
-      ctx.fillStyle = rgba(s.clr, Math.min(1, 0.95 * fa * brt));
-      ctx.beginPath();
-      ctx.arc(px, py, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Spawn logic
-    const mouseActive = mouse.x >= 0 && gridSnap.x >= 0;
-    if (mouseActive) {
-      if (signals.length < MAX_SIG && Math.random() < 0.35) {
-        spawnFromGrid(gridSnap.x, gridSnap.y);
-      }
-    } else {
-      if (signals.length < 18 && Math.random() < 0.07) spawnAmbient();
-    }
-
-    // Periodic scan line
-    scanElapsed += 1 / 60;
+    // Occasional subtle glowing sweep line representing data processing
+    scanElapsed += deltaSeconds;
     if (scanY < 0 && scanElapsed >= scanInterval) {
       scanY = 0; scanElapsed = 0; scanInterval = 9 + Math.random() * 6;
     }
     if (scanY >= 0) {
-      scanY += 2.4;
+      scanY += 3.5;
       if (scanY > H) {
         scanY = -1;
       } else {
-        const sg = ctx.createLinearGradient(0, scanY - 5, 0, scanY + 5);
-        sg.addColorStop(0, 'rgba(110,210,255,0)');
-        sg.addColorStop(0.5, 'rgba(110,210,255,0.15)');
-        sg.addColorStop(1, 'rgba(110,210,255,0)');
+        const sg = ctx.createLinearGradient(0, scanY - 30, 0, scanY + 30);
+        sg.addColorStop(0, 'rgba(255,255,255,0)');
+        sg.addColorStop(0.5, 'rgba(255,255,255,0.08)');
+        sg.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = sg;
-        ctx.fillRect(0, scanY - 5, W, 10);
+        ctx.fillRect(0, scanY - 30, W, 60);
       }
     }
 
-    requestAnimationFrame(render);
+    rafId = requestAnimationFrame(render);
   }
 
-  // ── Mouse tracking — snap to nearest grid intersection ───────────────────
+  // ── Parallax Mouse Hooks ───────────────────────────────────────────────────
   const parent = canvas.parentElement;
   parent.addEventListener('mousemove', e => {
+    // Parallax moves slightly INVERSE to cursor for depth
     const r = canvas.getBoundingClientRect();
-    mouse.x = e.clientX - r.left;
-    mouse.y = e.clientY - r.top;
-    gridSnap.x = Math.round(mouse.x / PITCH) * PITCH;
-    gridSnap.y = Math.round(mouse.y / PITCH) * PITCH;
+    const mx = e.clientX - r.left;
+    const my = e.clientY - r.top;
+
+    // Max offset of 30px
+    targetPanX = ((W / 2) - mx) * 0.05;
+    targetPanY = ((H / 2) - my) * 0.05;
   });
   parent.addEventListener('mouseleave', () => {
-    mouse.x = -1; mouse.y = -1;
-    gridSnap.x = -1; gridSnap.y = -1;
+    targetPanX = 0;
+    targetPanY = 0;
   });
 
   // ── Init ────────────────────────────────────────────────────────────────────
   window.addEventListener('resize', resize);
   resize();
 
-  // Seed with a few ambient signals
-  for (let i = 0; i < 14; i++) {
-    spawnAmbient();
-    if (signals.length) signals[signals.length - 1].t = Math.random();
+  const heroSection = canvas.closest('.hero') || canvas.parentElement;
+  if ('IntersectionObserver' in window && heroSection) {
+    const heroObserver = new IntersectionObserver((entries) => {
+      isHeroVisible = entries.some(entry => entry.isIntersecting);
+      setRenderActive(isHeroVisible && !document.hidden);
+    }, { threshold: 0 });
+    heroObserver.observe(heroSection);
   }
 
-  requestAnimationFrame(render);
+  document.addEventListener('visibilitychange', () => {
+    setRenderActive(isHeroVisible && !document.hidden);
+  });
+
+  setRenderActive(!document.hidden);
 })();

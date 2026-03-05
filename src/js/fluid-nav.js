@@ -1,0 +1,244 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const nav = document.querySelector('.fluid-nav');
+    if (!nav) return;
+    const pill = document.querySelector('.active-pill');
+    const items = document.querySelectorAll('.nav-item');
+
+    let activeIndex = 0; // Start at 0
+    let isPointerDown = false;
+    let isDragging = false;
+    let dragOccurred = false; // to prevent click after drag
+    let isAutoScrolling = false; // Prevents scroll triggers from hijacking during a programmatic click jump
+    let startX = 0;
+    let downTarget = null;
+
+    // Physics & Lerp variables
+    let startPillTx = 0;
+    let dragTargetX = 0;
+    let dragCurrentX = 0;
+    let dragRaf;
+
+    function updatePill(index, animate = true, isClick = true) {
+        if (!items[index]) return;
+        const item = items[index];
+        const itemLeft = item.offsetLeft;
+        const itemWidth = item.offsetWidth;
+
+        if (animate) {
+            const duration = isClick ? '0.6s' : '0.35s';
+            const easing = isClick
+                ? 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+                : 'cubic-bezier(0.22, 1, 0.36, 1)';
+            pill.style.transition = `transform ${duration} ${easing}, width ${duration} ${easing}`;
+        } else {
+            pill.style.transition = 'none';
+        }
+
+        pill.style.transform = `translateX(${itemLeft}px) scale(1, 1)`;
+        pill.style.width = `${itemWidth}px`;
+
+        // Update active text states
+        items.forEach((navItem, i) => {
+            navItem.classList.toggle('active', i === index);
+        });
+    }
+
+    // Initialize position after fonts and layout settle
+    setTimeout(() => { updatePill(activeIndex, false); }, 100);
+
+    // Physics Loop for dragging
+    function dragLoop() {
+        if (!isPointerDown) return;
+
+        // Interpolate for heavy "syrup" lag feel (lower = heavier)
+        dragCurrentX += (dragTargetX - dragCurrentX) * 0.2;
+
+        // Calculate squash and stretch based on velocity
+        const velocity = dragTargetX - dragCurrentX;
+        const absVelocity = Math.abs(velocity);
+
+        let stretchX = 1 + (absVelocity * 0.025); // Exaggerated drag stretch
+        stretchX = Math.min(stretchX, 1.7); // Higher max stretch cap
+        let squashY = 1 / Math.sqrt(stretchX); // Maintain volume
+
+        pill.style.transform = `translateX(${dragCurrentX}px) scale(${stretchX}, ${squashY})`;
+
+        dragRaf = requestAnimationFrame(dragLoop);
+    }
+
+    // Intercept clicks strictly to prevent native jumping
+    nav.addEventListener('click', (e) => {
+        const anchor = e.target.closest('a');
+        if (anchor && anchor.getAttribute('href').startsWith('#')) {
+            e.preventDefault();
+        }
+        if (dragOccurred) {
+            e.preventDefault();
+            dragOccurred = false;
+        }
+    });
+
+    // Handle all interactions directly on the nav container
+    nav.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0 && e.pointerType === 'mouse') return; // Only trigger on left-click/touch
+
+        isPointerDown = true;
+        isDragging = false;
+        dragOccurred = false;
+        startX = e.clientX;
+        downTarget = e.target.closest('.nav-item'); // Remember what was clicked
+
+        const matrix = new DOMMatrix(window.getComputedStyle(pill).transform);
+        startPillTx = matrix.m41;
+        dragTargetX = startPillTx;
+        dragCurrentX = startPillTx;
+
+        nav.setPointerCapture(e.pointerId);
+        pill.style.transition = 'none';
+        pill.getAnimations().forEach(anim => anim.cancel());
+    });
+
+    nav.addEventListener('pointermove', (e) => {
+        if (!isPointerDown) return;
+
+        const deltaX = e.clientX - startX;
+
+        // Drag threshold
+        if (!isDragging && Math.abs(deltaX) > 3) {
+            isDragging = true;
+            dragOccurred = true;
+            dragLoop(); // Start physics engine
+        }
+
+        if (isDragging) {
+            let newX = startPillTx + deltaX;
+
+            const minX = items[0].offsetLeft;
+            const lastItem = items[items.length - 1];
+            const maxX = lastItem.offsetLeft + lastItem.offsetWidth - pill.offsetWidth;
+
+            // Add subtle rubber-banding resistance at the edges
+            if (newX < minX) newX = minX - Math.pow(minX - newX, 0.55);
+            else if (newX > maxX) newX = maxX + Math.pow(newX - maxX, 0.55);
+
+            dragTargetX = newX;
+        }
+    });
+
+    nav.addEventListener('pointerup', (e) => {
+        if (!isPointerDown) return;
+        isPointerDown = false;
+        nav.releasePointerCapture(e.pointerId);
+
+        const triggerScroll = (index) => {
+            const targetHref = items[index].getAttribute('href');
+            if (!targetHref || !targetHref.startsWith('#')) return;
+
+            isAutoScrolling = true;
+
+            setTimeout(() => {
+                if (targetHref === '#') {
+                    if (window.lenis) {
+                        window.lenis.scrollTo(0, { onComplete: () => { isAutoScrolling = false; } });
+                    } else {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setTimeout(() => { isAutoScrolling = false; }, 1000);
+                    }
+                } else {
+                    if (window.lenis && document.querySelector(targetHref)) {
+                        window.lenis.scrollTo(targetHref, {
+                            offset: -60,
+                            onComplete: () => { isAutoScrolling = false; }
+                        });
+                    } else {
+                        const targetE = document.querySelector(targetHref);
+                        if (targetE) targetE.scrollIntoView({ behavior: 'smooth' });
+                        setTimeout(() => { isAutoScrolling = false; }, 1000);
+                    }
+                }
+            }, 50);
+        };
+
+        if (isDragging) {
+            cancelAnimationFrame(dragRaf);
+
+            // Find the closest pill based on visual dropped position
+            const pillCenter = dragCurrentX + (pill.offsetWidth / 2);
+
+            let closestIndex = 0;
+            let minDistance = Infinity;
+
+            items.forEach((item, index) => {
+                const itemCenter = item.offsetLeft + (item.offsetWidth / 2);
+                const dist = Math.abs(pillCenter - itemCenter);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestIndex = index;
+                }
+            });
+
+            activeIndex = closestIndex;
+            updatePill(activeIndex, true, false); // Snap, but no extra click-stretch
+            triggerScroll(activeIndex);
+
+        } else {
+            // Clean tap/click
+            if (downTarget) {
+                activeIndex = Array.from(items).indexOf(downTarget);
+            }
+            updatePill(activeIndex, true, true); // Snap WITH dynamic click-stretch effort
+            triggerScroll(activeIndex);
+        }
+    });
+
+    nav.addEventListener('pointercancel', () => {
+        if (!isPointerDown) return;
+        isPointerDown = false;
+        dragOccurred = false;
+        cancelAnimationFrame(dragRaf);
+        updatePill(activeIndex, true, false);
+    });
+
+    // Recalculate positions on window resize
+    window.addEventListener('resize', () => {
+        updatePill(activeIndex, false);
+    });
+
+    // Update based on scroll
+    if (window.ScrollTrigger) {
+        const sections = ['#projects', '#experience', '#education', '#skills', '#contact'];
+        sections.forEach((sec) => {
+            window.ScrollTrigger.create({
+                trigger: sec,
+                start: 'top center',
+                end: 'bottom center',
+                onEnter: () => setActiveFromHash(sec),
+                onEnterBack: () => setActiveFromHash(sec)
+            });
+        });
+
+        window.ScrollTrigger.create({
+            trigger: '.hero',
+            start: 'top baseline',
+            end: 'bottom center',
+            onEnter: () => setActiveFromHash('#'),
+            onEnterBack: () => setActiveFromHash('#')
+        });
+
+        function setActiveFromHash(hash) {
+            if (isPointerDown || isDragging || isAutoScrolling) return;
+            const map = {
+                '#': 0,
+                '#projects': 1,
+                '#experience': 2,
+                '#education': 3,
+                '#skills': 4,
+                '#contact': 5
+            };
+            const nextIndex = map[hash];
+            if (nextIndex === undefined || nextIndex === activeIndex) return;
+            activeIndex = nextIndex;
+            updatePill(activeIndex, true, false);
+        }
+    }
+});

@@ -92,31 +92,91 @@ const profile = {
   ]
 };
 
-// Initialize Lenis with smoother settings
-const lenis = new Lenis({
-  duration: 1.2,
-  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-  direction: 'vertical',
-  gestureDirection: 'vertical',
-  smooth: true,
-  mouseMultiplier: 1,
-  smoothTouch: false,
-  touchMultiplier: 2,
-});
-
-function raf(time) {
-  lenis.raf(time);
-  requestAnimationFrame(raf);
+function detectPerfMode() {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const lowMemory = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 4;
+  const lowCpu = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 4;
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const saveData = !!(connection && connection.saveData);
+  const slowNetwork = !!(connection && typeof connection.effectiveType === 'string' &&
+    /(^2g$|^slow-2g$|^3g$)/i.test(connection.effectiveType));
+  return (reducedMotion || lowMemory || lowCpu || saveData || slowNetwork) ? 'lite' : 'full';
 }
 
-// GSAP ScrollTrigger integration with Lenis
-lenis.on('scroll', ScrollTrigger.update);
-gsap.ticker.add((time) => {
-  lenis.raf(time * 1000);
-});
-gsap.ticker.lagSmoothing(0);
+const perfMode = detectPerfMode();
+document.body.dataset.perfMode = perfMode;
+const isLiteMode = perfMode === 'lite';
 
-requestAnimationFrame(raf);
+let lenis = null;
+
+if (!isLiteMode && typeof Lenis !== 'undefined') {
+  lenis = new Lenis({
+    duration: 1.2,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    direction: 'vertical',
+    gestureDirection: 'vertical',
+    smooth: true,
+    mouseMultiplier: 1,
+    smoothTouch: false,
+    touchMultiplier: 2,
+  });
+  window.lenis = lenis;
+
+  let stUpdateQueued = false;
+  lenis.on('scroll', () => {
+    if (!window.ScrollTrigger || stUpdateQueued) return;
+    stUpdateQueued = true;
+    requestAnimationFrame(() => {
+      ScrollTrigger.update();
+      stUpdateQueued = false;
+    });
+  });
+
+  function lenisRaf(time) {
+    if (!lenis) return;
+    lenis.raf(time);
+    requestAnimationFrame(lenisRaf);
+  }
+  requestAnimationFrame(lenisRaf);
+} else {
+  window.lenis = null;
+}
+
+let teardownModulePromise = null;
+let teardownModule = null;
+let teardownPreloadPromise = null;
+let activeModalToken = 0;
+
+function loadTeardownModule() {
+  if (teardownModulePromise) return teardownModulePromise;
+  teardownModulePromise = import('./chip-teardown.js').then((mod) => {
+    teardownModule = mod;
+    return mod;
+  }).catch((err) => {
+    teardownModulePromise = null;
+    throw err;
+  });
+  return teardownModulePromise;
+}
+
+function startTeardownPreload() {
+  if (teardownPreloadPromise) return teardownPreloadPromise;
+  teardownPreloadPromise = loadTeardownModule()
+    .then((mod) => {
+      if (typeof mod.preloadChipTeardown !== 'function') return false;
+      return mod.preloadChipTeardown();
+    })
+    .catch((err) => {
+      console.error('[teardown] startup preload failed:', err);
+      return false;
+    });
+  return teardownPreloadPromise;
+}
+
+// Start fetching the teardown module + GLB as soon as app.js executes.
+const startupTeardownPreloadPromise = startTeardownPreload();
+
+
 
 
 // Render Functions for Crystal Glass Aesthetic
@@ -176,13 +236,51 @@ function getCacheDetailHTML() {
 
     <div class="modal-scroll-container" data-lenis-prevent>
 
-      <!-- 3D Model Viewer -->
+      <!-- 3D Scrollytelling Container -->
       <div class="modal-viewer-section">
-        <div class="chip-viewer-container" id="chip-3d-container">
-          <div class="chip-loading" id="chip-loading">Loading 3D model...</div>
+        <div class="chip-viewer-container" id="modal-model-target">
+          <div class="chip-loading" id="teardown-loading">Loading 3D teardown...</div>
+          <div class="teardown-intro" id="teardown-intro">
+            <span class="teardown-intro-tag">Interactive Teardown</span>
+            <h3 class="teardown-intro-title">Two-Level Cache Layer Walkthrough</h3>
+          </div>
+          <button
+            class="teardown-scroll-indicator"
+            id="teardown-scroll-indicator"
+            type="button"
+            aria-label="Scroll down to explore teardown layers"
+          >
+            <span>Scroll Down</span>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <!-- Text labels — BEHIND the transparent Three.js canvas (z-index: 1) -->
+          <div class="teardown-labels">
+            <div class="teardown-label"><span class="teardown-tag">Top Metal</span><h3 class="teardown-name">Package Shell</h3><p class="teardown-desc">Outermost metal interconnect — structural integrity and die-level connections.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Metal 7</span><h3 class="teardown-name">M7 — Power Strapping</h3><p class="teardown-desc">Long-range vertical routing for power grid distribution.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Metal 6</span><h3 class="teardown-name">M6 — Clock Distribution</h3><p class="teardown-desc">Global clock tree and cross-die signal buses.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Metal 5</span><h3 class="teardown-name">M5 — Signal Routing</h3><p class="teardown-desc">Mid-range interconnects and power rail reinforcement.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Metal 4</span><h3 class="teardown-name">M4 — Local Routing</h3><p class="teardown-desc">Local and semi-global signal distribution.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Metal 3</span><h3 class="teardown-name">M3 — Dense Routing</h3><p class="teardown-desc">Dense inter-cell connections and local signal wiring.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Metal 2</span><h3 class="teardown-name">M2 — Local Interconnect</h3><p class="teardown-desc">High-density local interconnect between standard cells.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Metal 1</span><h3 class="teardown-name">M1 — Transistor Contacts</h3><p class="teardown-desc">Finest-pitch routing directly above the silicon transistors.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Infrastructure</span><h3 class="teardown-name">Power Grid / Decap</h3><p class="teardown-desc">Power distribution network and decoupling capacitors for IR drop mitigation.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Infrastructure</span><h3 class="teardown-name">Clock Tree / PLL</h3><p class="teardown-desc">Clock distribution buffers and phase-locked loop macro.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Periphery</span><h3 class="teardown-name">I/O Pads / PHY</h3><p class="teardown-desc">I/O pad ring and physical interface cells at the die edge.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Cache</span><h3 class="teardown-name">L2 Cache Ring Bus</h3><p class="teardown-desc">Ring interconnect for multi-bank L2 data transfer.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Memory</span><h3 class="teardown-name">Register File / SRAM</h3><p class="teardown-desc">SRAM bit cells and register file arrays.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Cache</span><h3 class="teardown-name">L1 Data Cache</h3><p class="teardown-desc">Lowest-latency data storage in the memory hierarchy.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Cache</span><h3 class="teardown-name">L1 Instruction Cache</h3><p class="teardown-desc">Fast fetch pipeline access for instruction supply.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Logic</span><h3 class="teardown-name">Standard Cells</h3><p class="teardown-desc">Synthesized gates — the combinational and sequential core.</p></div>
+            <div class="teardown-label"><span class="teardown-tag">Foundation</span><h3 class="teardown-name">Silicon Substrate</h3><p class="teardown-desc">The silicon die itself — the wafer on which all transistors are fabricated.</p></div>
+          </div>
+          <!-- Three.js <canvas> is appended here by chip-teardown.js (z-index: 2) -->
         </div>
-        <div class="viewer-hint">Drag to rotate &middot; Scroll to zoom &middot; Right-click to pan</div>
       </div>
+
+      <!-- Scroll spacer — drives the GSAP ScrollTrigger timeline (invisible) -->
+      <div id="teardown-spacer" class="teardown-scroll-spacer"></div>
 
       <!-- Project Header -->
       <div class="modal-header">
@@ -378,7 +476,9 @@ function getCacheDetailHTML() {
 
 function openCacheModal() {
   // Prevent background scroll
-  if (typeof lenis !== 'undefined') lenis.stop();
+  if (lenis) lenis.stop();
+  activeModalToken += 1;
+  const modalToken = activeModalToken;
 
   // Create overlay
   const overlay = document.createElement('div');
@@ -390,17 +490,182 @@ function openCacheModal() {
   modal.innerHTML = getCacheDetailHTML();
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+  const loadingEl = modal.querySelector('#teardown-loading');
+  const modalScroller = modal.querySelector('.modal-scroll-container');
+  const introEl = modal.querySelector('#teardown-intro');
+  const teardownScrollIndicator = modal.querySelector('#teardown-scroll-indicator');
 
   // Animate in
   requestAnimationFrame(() => {
     overlay.classList.add('active');
   });
 
-  // Init 3D viewer — model is pre-cached, so this is instant
-  const container = document.getElementById('chip-3d-container');
-  if (container && window.ChipViewer) {
-    window.ChipViewer.init(container);
+  let introHidden = false;
+  function hideTeardownIntro() {
+    if (introHidden) return;
+    introHidden = true;
+    if (introEl) introEl.classList.add('is-hidden');
+    if (teardownScrollIndicator) teardownScrollIndicator.classList.add('is-hidden');
+    if (modalScroller) modalScroller.removeEventListener('scroll', onIntroScroll);
   }
+
+  function onIntroScroll() {
+    if (!modalScroller) return;
+    if (modalScroller.scrollTop > 36) hideTeardownIntro();
+  }
+
+  if (modalScroller) {
+    if (modalScroller.scrollTop > 36) hideTeardownIntro();
+    else modalScroller.addEventListener('scroll', onIntroScroll, { passive: true });
+  }
+
+  if (teardownScrollIndicator && modalScroller) {
+    teardownScrollIndicator.addEventListener('click', (e) => {
+      e.preventDefault();
+      hideTeardownIntro();
+      const step = Math.max(320, Math.round(modalScroller.clientHeight * 1.15));
+      const targetTop = Math.min(modalScroller.scrollHeight - modalScroller.clientHeight, step);
+      modalScroller.scrollTo({ top: targetTop, behavior: 'smooth' });
+    });
+  }
+
+  // Startup preload should already be in-flight; this keeps modal-open robust.
+  if (loadingEl) {
+    loadingEl.classList.remove('is-hidden');
+    loadingEl.textContent = 'Loading 3D teardown...';
+  }
+  loadTeardownModule()
+    .then((mod) => {
+      if (modalToken !== activeModalToken || !document.body.contains(overlay)) return false;
+      return mod.initChipTeardown(modal);
+    })
+    .then((ready) => {
+      if (!loadingEl || ready === undefined) return;
+      if (modalToken !== activeModalToken || !document.body.contains(overlay)) return;
+      if (ready) {
+        loadingEl.classList.add('is-hidden');
+      } else {
+        loadingEl.textContent = '3D teardown unavailable';
+      }
+    })
+    .catch((err) => {
+      console.error('[cache-modal] failed to load 3D teardown', err);
+      if (loadingEl && modalToken === activeModalToken && document.body.contains(overlay)) {
+        loadingEl.textContent = 'Failed to load 3D teardown';
+      }
+    });
+
+  // ── Teardown label scroll listener ──
+  // Shows/hides layer labels as user scrolls through the spacer
+  setTimeout(() => {
+    const scroller = modalScroller;
+    const spacer = modal.querySelector('#teardown-spacer');
+    const labelEls = Array.from(modal.querySelectorAll('.teardown-label'));
+    const viewerSection = modal.querySelector('.modal-viewer-section');
+    const totalLabels = labelEls.length;
+    let activeLabel = -1;
+    let scrollTicking = false;
+    let layersHighlighted = false;
+    let isViewerHidden = false;
+    let canvasEl = null;
+
+    function getCanvasEl() {
+      if (canvasEl && document.body.contains(canvasEl)) return canvasEl;
+      canvasEl = modal.querySelector('.chip-viewer-container canvas');
+      return canvasEl;
+    }
+
+    function setViewerHidden(hidden) {
+      if (isViewerHidden === hidden) return;
+      isViewerHidden = hidden;
+      const canvas = getCanvasEl();
+      if (canvas) {
+        canvas.style.opacity = hidden ? '0' : '1';
+        canvas.style.transition = 'opacity 0.4s ease';
+      }
+      if (viewerSection) {
+        viewerSection.style.opacity = hidden ? '0' : '1';
+        viewerSection.style.transition = 'opacity 0.4s ease';
+      }
+    }
+
+    function hideAllLabels() {
+      if (activeLabel >= 0 && activeLabel < totalLabels) {
+        labelEls[activeLabel].style.opacity = '0';
+        labelEls[activeLabel].style.transform = 'translate(-50%, -50%) translateY(-20px)';
+      }
+      activeLabel = -1;
+      if (layersHighlighted && window.resetChipLayers) {
+        window.resetChipLayers();
+      }
+      layersHighlighted = false;
+    }
+
+    // Ensure model starts in original colors
+    if (window.resetChipLayers) window.resetChipLayers();
+
+    if (scroller && spacer && totalLabels > 0) {
+      const updateLabelState = () => {
+        if (!document.body.contains(modal)) {
+          scroller.removeEventListener('scroll', onLabelScroll);
+          return;
+        }
+
+        // Progress: 0 = spacer top at scroller top, 1 = spacer fully scrolled
+        const spacerHeight = Math.max(1, spacer.offsetHeight);
+        const progress = Math.max(0, Math.min(1,
+          (scroller.scrollTop - spacer.offsetTop) / spacerHeight
+        ));
+
+        // ── Labels only show between 5% and 80% progress ──
+        if (progress > 0.80) {
+          hideAllLabels();
+          setViewerHidden(true);
+          return;
+        }
+        if (progress < 0.05) {
+          hideAllLabels();
+          setViewerHidden(false);
+          return;
+        }
+
+        // Ensure visible during active teardown
+        setViewerHidden(false);
+
+        // Scale progress to 0-1 within the 5%-80% window
+        const adjustedProgress = (progress - 0.05) / 0.75;
+        const idx = Math.min(totalLabels - 1, Math.floor(adjustedProgress * totalLabels));
+
+        if (idx !== activeLabel) {
+          if (activeLabel >= 0 && activeLabel < totalLabels) {
+            labelEls[activeLabel].style.opacity = '0';
+            labelEls[activeLabel].style.transform = 'translate(-50%, -50%) translateY(-20px)';
+          }
+          activeLabel = idx;
+          labelEls[activeLabel].style.opacity = '1';
+          labelEls[activeLabel].style.transform = 'translate(-50%, -50%) translateY(0)';
+
+          // ── Highlight the individual 3D layer mesh ──
+          if (window.highlightChipLayer) {
+            window.highlightChipLayer(activeLabel);
+            layersHighlighted = true;
+          }
+        }
+      };
+
+      function onLabelScroll() {
+        if (scrollTicking) return;
+        scrollTicking = true;
+        requestAnimationFrame(() => {
+          scrollTicking = false;
+          updateLabelState();
+        });
+      }
+
+      scroller.addEventListener('scroll', onLabelScroll, { passive: true });
+      updateLabelState();
+    }
+  }, 300);
 
   // Close handlers
   const closeBtn = modal.querySelector('.modal-close-btn');
@@ -416,13 +681,13 @@ function openCacheModal() {
 function closeCacheModal() {
   const overlay = document.getElementById('cache-modal');
   if (!overlay) return;
+  activeModalToken += 1;
+
+  if (teardownModule && typeof teardownModule.destroyChipTeardown === 'function') {
+    teardownModule.destroyChipTeardown();
+  }
 
   overlay.classList.remove('active');
-
-  // Dispose 3D viewer
-  if (window.ChipViewer) {
-    window.ChipViewer.dispose();
-  }
 
   // Remove after animation
   setTimeout(() => {
@@ -430,7 +695,7 @@ function closeCacheModal() {
   }, 400);
 
   // Resume background scroll
-  if (typeof lenis !== 'undefined') lenis.start();
+  if (lenis) lenis.start();
 
   document.removeEventListener('keydown', handleModalEsc);
 }
@@ -554,8 +819,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const glassImage = document.getElementById('glass-map-image');
   if (glassImage) glassImage.setAttribute('href', 'assets/glass-map.png');
 
-  // Ensure Lenis is running
-  requestAnimationFrame(raf);
+  // Lenis is only active in full mode and runs via its own rAF loop
 
   // Render all content immediately (during preload = no jank)
   renderProjects();
@@ -590,7 +854,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const obj = { val: 0 };
       gsap.to(obj, {
         val: target,
-        duration: 1.8,
+        duration: 0.6,
         ease: 'power2.out',
         scrollTrigger: {
           trigger: el,
@@ -668,33 +932,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
   prepareHeroReveal();
 
+  // ── Hero scroll indicator ───────────────────────────────────────────
+  const scrollIndicator = document.querySelector('.scroll-indicator');
+  if (scrollIndicator) {
+    let hidden = false;
+    const hideIndicator = () => {
+      if (hidden) return;
+      hidden = true;
+      scrollIndicator.classList.add('is-hidden');
+      window.removeEventListener('scroll', onFirstScroll);
+    };
+    const onFirstScroll = () => {
+      if (window.scrollY > 40) hideIndicator();
+    };
 
+    if (window.scrollY > 40) hideIndicator();
+    else window.addEventListener('scroll', onFirstScroll, { passive: true });
 
-  // ── Model-gated reveal ─────────────────────────────────────────────
-  function waitForModel() {
-    let dismissed = false;
-    function reveal() {
-      if (dismissed) return;
-      dismissed = true;
-      dismissPreloader();
-    }
-
-    const safetyTimer = setTimeout(reveal, 8000);
-
-    function tryHook() {
-      if (window.ChipViewer && typeof window.ChipViewer.onReady === 'function') {
-        window.ChipViewer.onReady(() => {
-          clearTimeout(safetyTimer);
-          reveal();
-        });
-      } else {
-        setTimeout(tryHook, 50);
+    scrollIndicator.addEventListener('click', (e) => {
+      e.preventDefault();
+      hideIndicator();
+      if (lenis) {
+        lenis.scrollTo('#projects', { offset: -60 });
+        return;
       }
-    }
-    tryHook();
+      const target = document.querySelector('#projects');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
-  waitForModel();
+  // ── Dismiss preloader after teardown preload completes ──
+  const preloaderStatus = document.getElementById('preloader-status');
+  if (preloaderStatus) preloaderStatus.textContent = 'Preloading 3D teardown...';
+
+  startupTeardownPreloadPromise
+    .catch(() => false)
+    .finally(() => {
+      dismissPreloader();
+    });
 });
-
-
