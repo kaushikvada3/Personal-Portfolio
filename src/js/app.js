@@ -92,6 +92,104 @@ const profile = {
   ]
 };
 
+const teardownLayerInfo = [
+  {
+    tag: 'M1',
+    name: 'Metal 1 - Local Interconnect',
+    desc: 'The lowest level of horizontal metal wiring, used for dense local connections right above the transistors.',
+  },
+  {
+    tag: 'M2',
+    name: 'Metal 2 - Routing Layer',
+    desc: 'The second tier of horizontal metal wiring.',
+  },
+  {
+    tag: 'M3',
+    name: 'Metal 3 - Routing Layer',
+    desc: 'The third tier of horizontal metal wiring.',
+  },
+  {
+    tag: 'M4',
+    name: 'Metal 4 - Routing Layer',
+    desc: 'The fourth tier of horizontal metal wiring.',
+  },
+  {
+    tag: 'M5',
+    name: 'Metal 5 - Medium-Distance Signal Routing',
+    desc: 'The fifth tier of horizontal metal wiring, typically used for medium-distance signal routing.',
+  },
+  {
+    tag: 'M6',
+    name: 'Metal 6 - Upper Routing Layer',
+    desc: 'The sixth tier of horizontal metal wiring.',
+  },
+  {
+    tag: 'M7',
+    name: 'Metal 7 - Power and Clock Distribution',
+    desc: 'The seventh tier of horizontal metal wiring, usually thicker for broader power distribution or clock signals.',
+  },
+  {
+    tag: 'M8',
+    name: 'Metal 8 - Global Routing and Power Grid',
+    desc: 'The eighth and highest tier of horizontal metal wiring in this stack, handling critical global routing and power grids.',
+  },
+  {
+    tag: 'POLY',
+    name: 'Polysilicon Gate Layer',
+    desc: 'The polysilicon layer. Physically this sits below metal1 and forms the transistor gates that do the actual compute work.',
+  },
+  {
+    tag: 'V1',
+    name: 'Via 1 - M1 to M2',
+    desc: 'Vertical pillars that connect the metal1 layer up to the metal2 layer.',
+  },
+  {
+    tag: 'V2',
+    name: 'Via 2 - M2 to M3',
+    desc: 'Vertical pillars that connect metal2 up to metal3.',
+  },
+  {
+    tag: 'V3',
+    name: 'Via 3 - M3 to M4',
+    desc: 'Vertical pillars that connect metal3 up to metal4.',
+  },
+  {
+    tag: 'V4',
+    name: 'Via 4 - M4 to M5',
+    desc: 'Vertical pillars that connect metal4 up to metal5.',
+  },
+  {
+    tag: 'V5',
+    name: 'Via 5 - M5 to M6',
+    desc: 'Vertical pillars that connect metal5 up to metal6.',
+  },
+  {
+    tag: 'V6',
+    name: 'Via 6 - M6 to M7',
+    desc: 'Vertical pillars that connect metal6 up to metal7.',
+  },
+  {
+    tag: 'V7',
+    name: 'Via 7 - M7 to M8',
+    desc: 'Vertical pillars that connect metal7 up to metal8.',
+  },
+  {
+    tag: 'V8',
+    name: 'Via 8 - Top Metal to External Pads',
+    desc: 'Topmost vertical connections, typically leading up from metal8 to external bumps or pads.',
+  },
+];
+
+function renderTeardownLabels() {
+  return teardownLayerInfo.map((layer) => `
+    <div class="teardown-label">
+      <span class="teardown-tag">${layer.tag}</span>
+      <h3 class="teardown-name">${layer.name}</h3>
+      <p class="teardown-desc">${layer.desc}</p>
+    </div>
+  `).join('');
+}
+
 function detectPerfMode() {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lowMemory = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 4;
@@ -329,23 +427,7 @@ function getCacheDetailHTML() {
           </button>
           <!-- Text labels — BEHIND the transparent Three.js canvas (z-index: 1) -->
           <div class="teardown-labels">
-            <div class="teardown-label"><span class="teardown-tag">Top Metal</span><h3 class="teardown-name">Package Shell</h3><p class="teardown-desc">Outermost metal interconnect — structural integrity and die-level connections.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Metal 7</span><h3 class="teardown-name">M7 — Power Strapping</h3><p class="teardown-desc">Long-range vertical routing for power grid distribution.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Metal 6</span><h3 class="teardown-name">M6 — Clock Distribution</h3><p class="teardown-desc">Global clock tree and cross-die signal buses.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Metal 5</span><h3 class="teardown-name">M5 — Signal Routing</h3><p class="teardown-desc">Mid-range interconnects and power rail reinforcement.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Metal 4</span><h3 class="teardown-name">M4 — Local Routing</h3><p class="teardown-desc">Local and semi-global signal distribution.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Metal 3</span><h3 class="teardown-name">M3 — Dense Routing</h3><p class="teardown-desc">Dense inter-cell connections and local signal wiring.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Metal 2</span><h3 class="teardown-name">M2 — Local Interconnect</h3><p class="teardown-desc">High-density local interconnect between standard cells.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Metal 1</span><h3 class="teardown-name">M1 — Transistor Contacts</h3><p class="teardown-desc">Finest-pitch routing directly above the silicon transistors.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Infrastructure</span><h3 class="teardown-name">Power Grid / Decap</h3><p class="teardown-desc">Power distribution network and decoupling capacitors for IR drop mitigation.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Infrastructure</span><h3 class="teardown-name">Clock Tree / PLL</h3><p class="teardown-desc">Clock distribution buffers and phase-locked loop macro.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Periphery</span><h3 class="teardown-name">I/O Pads / PHY</h3><p class="teardown-desc">I/O pad ring and physical interface cells at the die edge.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Cache</span><h3 class="teardown-name">L2 Cache Ring Bus</h3><p class="teardown-desc">Ring interconnect for multi-bank L2 data transfer.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Memory</span><h3 class="teardown-name">Register File / SRAM</h3><p class="teardown-desc">SRAM bit cells and register file arrays.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Cache</span><h3 class="teardown-name">L1 Data Cache</h3><p class="teardown-desc">Lowest-latency data storage in the memory hierarchy.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Cache</span><h3 class="teardown-name">L1 Instruction Cache</h3><p class="teardown-desc">Fast fetch pipeline access for instruction supply.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Logic</span><h3 class="teardown-name">Standard Cells</h3><p class="teardown-desc">Synthesized gates — the combinational and sequential core.</p></div>
-            <div class="teardown-label"><span class="teardown-tag">Foundation</span><h3 class="teardown-name">Silicon Substrate</h3><p class="teardown-desc">The silicon die itself — the wafer on which all transistors are fabricated.</p></div>
+            ${renderTeardownLabels()}
           </div>
           <!-- Three.js <canvas> is appended here by chip-teardown.js (z-index: 2) -->
         </div>
