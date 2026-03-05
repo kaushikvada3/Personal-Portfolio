@@ -106,19 +106,20 @@ function detectPerfMode() {
 const perfMode = detectPerfMode();
 document.body.dataset.perfMode = perfMode;
 const isLiteMode = perfMode === 'lite';
+const networkConnection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 
 let lenis = null;
 
 if (!isLiteMode && typeof Lenis !== 'undefined') {
   lenis = new Lenis({
-    duration: 1.2,
+    duration: 1.22,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     direction: 'vertical',
     gestureDirection: 'vertical',
     smooth: true,
-    mouseMultiplier: 1,
+    mouseMultiplier: 0.9,
     smoothTouch: false,
-    touchMultiplier: 2,
+    touchMultiplier: 1.55,
   });
   window.lenis = lenis;
 
@@ -145,7 +146,45 @@ if (!isLiteMode && typeof Lenis !== 'undefined') {
 let teardownModulePromise = null;
 let teardownModule = null;
 let teardownPreloadPromise = null;
+let teardownPreloadScheduled = false;
+let teardownPreloadStarted = false;
+let modalStylesPromise = null;
 let activeModalToken = 0;
+
+function shouldSkipBackgroundTeardownPreload() {
+  const saveData = !!(networkConnection && networkConnection.saveData);
+  const slowNetwork = !!(
+    networkConnection &&
+    typeof networkConnection.effectiveType === 'string' &&
+    /(^2g$|^slow-2g$|^3g$)/i.test(networkConnection.effectiveType)
+  );
+  return isLiteMode || saveData || slowNetwork;
+}
+
+function ensureModalStylesLoaded() {
+  if (modalStylesPromise) return modalStylesPromise;
+
+  const existingStylesheet = document.querySelector('link[data-modal-styles="teardown"]');
+  if (existingStylesheet) {
+    modalStylesPromise = Promise.resolve(true);
+    return modalStylesPromise;
+  }
+
+  modalStylesPromise = new Promise((resolve, reject) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'src/styles/modal-teardown.css';
+    link.dataset.modalStyles = 'teardown';
+    link.onload = () => resolve(true);
+    link.onerror = (err) => {
+      modalStylesPromise = null;
+      reject(err);
+    };
+    document.head.appendChild(link);
+  });
+
+  return modalStylesPromise;
+}
 
 function loadTeardownModule() {
   if (teardownModulePromise) return teardownModulePromise;
@@ -167,14 +206,35 @@ function startTeardownPreload() {
       return mod.preloadChipTeardown();
     })
     .catch((err) => {
-      console.error('[teardown] startup preload failed:', err);
+      console.error('[teardown] background preload failed:', err);
       return false;
     });
   return teardownPreloadPromise;
 }
 
-// Start fetching the teardown module + GLB as soon as app.js executes.
-const startupTeardownPreloadPromise = startTeardownPreload();
+function runTeardownPreload(force = false) {
+  if (teardownPreloadStarted) return;
+  if (!force && shouldSkipBackgroundTeardownPreload()) return;
+  teardownPreloadStarted = true;
+  ensureModalStylesLoaded().catch(() => false);
+  startTeardownPreload().catch(() => false);
+}
+
+function scheduleTeardownPreload(force = false) {
+  if (force) {
+    runTeardownPreload(true);
+    return;
+  }
+  if (teardownPreloadScheduled) return;
+  teardownPreloadScheduled = true;
+
+  const idleTask = () => runTeardownPreload(false);
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(idleTask, { timeout: 2500 });
+  } else {
+    setTimeout(idleTask, 800);
+  }
+}
 
 
 
@@ -221,7 +281,14 @@ function renderProjects() {
     `;
 
     if (isExpandable) {
+      const warmTeardown = () => {
+        scheduleTeardownPreload(true);
+      };
+
       item.addEventListener('click', () => openCacheModal());
+      item.addEventListener('pointerenter', warmTeardown, { passive: true, once: true });
+      item.addEventListener('focusin', warmTeardown, { once: true });
+      item.addEventListener('touchstart', warmTeardown, { passive: true, once: true });
     }
 
     list.appendChild(item);
@@ -243,6 +310,7 @@ function getCacheDetailHTML() {
           <div class="teardown-intro" id="teardown-intro">
             <span class="teardown-intro-tag">Interactive Teardown</span>
             <h3 class="teardown-intro-title">Two-Level Cache Layer Walkthrough</h3>
+            <p class="teardown-intro-hint">Scroll to peel through the stack.</p>
           </div>
           <button
             class="teardown-scroll-indicator"
@@ -250,7 +318,10 @@ function getCacheDetailHTML() {
             type="button"
             aria-label="Scroll down to explore teardown layers"
           >
-            <span>Scroll Down</span>
+            <span class="teardown-scroll-copy">
+              <strong>Scroll to Explore</strong>
+              <em>Layers unlock as you move</em>
+            </span>
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
@@ -474,7 +545,14 @@ function getCacheDetailHTML() {
   `;
 }
 
-function openCacheModal() {
+async function openCacheModal() {
+  scheduleTeardownPreload(true);
+  try {
+    await ensureModalStylesLoaded();
+  } catch (err) {
+    console.warn('[cache-modal] modal stylesheet failed to load', err);
+  }
+
   // Prevent background scroll
   if (lenis) lenis.stop();
   activeModalToken += 1;
@@ -494,6 +572,7 @@ function openCacheModal() {
   const modalScroller = modal.querySelector('.modal-scroll-container');
   const introEl = modal.querySelector('#teardown-intro');
   const teardownScrollIndicator = modal.querySelector('#teardown-scroll-indicator');
+  if (modalScroller) modalScroller.scrollTop = 0;
 
   // Animate in
   requestAnimationFrame(() => {
@@ -523,7 +602,7 @@ function openCacheModal() {
     teardownScrollIndicator.addEventListener('click', (e) => {
       e.preventDefault();
       hideTeardownIntro();
-      const step = Math.max(320, Math.round(modalScroller.clientHeight * 1.15));
+      const step = Math.max(220, Math.round(modalScroller.clientHeight * 0.68));
       const targetTop = Math.min(modalScroller.scrollHeight - modalScroller.clientHeight, step);
       modalScroller.scrollTo({ top: targetTop, behavior: 'smooth' });
     });
@@ -617,13 +696,13 @@ function openCacheModal() {
           (scroller.scrollTop - spacer.offsetTop) / spacerHeight
         ));
 
-        // ── Labels only show between 5% and 80% progress ──
-        if (progress > 0.80) {
+        // ── Labels only show between 4% and 82% progress ──
+        if (progress > 0.82) {
           hideAllLabels();
           setViewerHidden(true);
           return;
         }
-        if (progress < 0.05) {
+        if (progress < 0.04) {
           hideAllLabels();
           setViewerHidden(false);
           return;
@@ -632,8 +711,8 @@ function openCacheModal() {
         // Ensure visible during active teardown
         setViewerHidden(false);
 
-        // Scale progress to 0-1 within the 5%-80% window
-        const adjustedProgress = (progress - 0.05) / 0.75;
+        // Scale progress to 0-1 within the active label window
+        const adjustedProgress = (progress - 0.04) / 0.78;
         const idx = Math.min(totalLabels - 1, Math.floor(adjustedProgress * totalLabels));
 
         if (idx !== activeLabel) {
@@ -827,8 +906,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderSkills();
   renderEducation();
 
-  if (window.feather) feather.replace();
-
   initHoverEffects();
 
   // ── GSAP Plugin setup ──────────────────────────────────────────────────
@@ -884,7 +961,16 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll('.reveal-item').forEach(el => revealObs.observe(el));
 
   // ── Preloader dismiss ───────────────────────────────────────────────
+  let preloaderDismissed = false;
+  let preloaderGuardTimer = 0;
   function dismissPreloader() {
+    if (preloaderDismissed) return;
+    preloaderDismissed = true;
+    if (preloaderGuardTimer) {
+      clearTimeout(preloaderGuardTimer);
+      preloaderGuardTimer = 0;
+    }
+
     const preloader = document.getElementById('preloader');
     if (!preloader) { document.body.classList.remove('is-loading'); return; }
     preloader.classList.add('done');
@@ -961,13 +1047,21 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ── Dismiss preloader after teardown preload completes ──
+  // ── Startup handoff (no network gate) ──
   const preloaderStatus = document.getElementById('preloader-status');
-  if (preloaderStatus) preloaderStatus.textContent = 'Preloading 3D teardown...';
+  if (preloaderStatus) preloaderStatus.textContent = 'Loading portfolio...';
 
-  startupTeardownPreloadPromise
-    .catch(() => false)
-    .finally(() => {
-      dismissPreloader();
-    });
+  const startInteractiveBoot = () => {
+    dismissPreloader();
+    scheduleTeardownPreload();
+  };
+
+  preloaderGuardTimer = window.setTimeout(startInteractiveBoot, 1800);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(startInteractiveBoot);
+  });
+
+  window.addEventListener('load', () => {
+    scheduleTeardownPreload();
+  }, { once: true });
 });

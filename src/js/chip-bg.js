@@ -26,12 +26,13 @@
   const perfMode = document.body.dataset.perfMode || detectPerfMode();
   if (!document.body.dataset.perfMode) document.body.dataset.perfMode = perfMode;
   const isLiteMode = perfMode === 'lite';
+  const isMobileViewport = window.matchMedia('(max-width: 900px)').matches;
 
   const ctx = canvas.getContext('2d');
   let W, H;
 
-  const PITCH = isLiteMode ? 28 : 22;
-  const TARGET_FPS = isLiteMode ? 20 : 30;
+  const PITCH = isLiteMode ? 30 : (isMobileViewport ? 26 : 22);
+  const TARGET_FPS = isLiteMode ? 18 : (isMobileViewport ? 24 : 30);
   const FRAME_MS = 1000 / TARGET_FPS;
 
   // EDA-style layer config
@@ -234,7 +235,7 @@
       if (ao < 0.003) return;
       ctx.strokeStyle = rgba('#ffffff', ao);
       ctx.strokeRect(cr.x + 0.5, cr.y + 0.5, cr.w - 1, cr.h - 1);
-      if (!isLiteMode && fa > 0.45 && cr.w > PITCH * 2.5) {
+      if (!isLiteMode && !isMobileViewport && fa > 0.45 && cr.w > PITCH * 2.5) {
         ctx.font = '5.5px "SF Mono", "Courier New", monospace';
         ctx.fillStyle = rgba('#ffffff', fa * 0.25);
         ctx.fillText(`(${cr.name})`, cr.x + 3, cr.y + cr.h - 3);
@@ -257,7 +258,7 @@
       else { ctx.moveTo(rt.x, rt.y1); ctx.lineTo(rt.x, rt.y2); }
       ctx.stroke();
 
-      if (!isLiteMode && rt.label && rt.li === 0 && fa > 0.55 && (rt.x2 - rt.x1) > PITCH * 5) {
+      if (!isLiteMode && !isMobileViewport && rt.label && rt.li === 0 && fa > 0.55 && (rt.x2 - rt.x1) > PITCH * 5) {
         ctx.font = '6px "SF Mono", "Courier New", monospace';
         ctx.fillStyle = rgba('#ffffff', fa * 0.5);
         ctx.fillText(`(${rt.label})`, rt.x1 + 4, rt.y - 2);
@@ -265,7 +266,8 @@
     });
 
     // Via squares
-    vias.forEach(v => {
+    vias.forEach((v, index) => {
+      if (isMobileViewport && (index % 2 !== 0)) return;
       const fa = fade(v.x);
       if (fa < 0.08) return;
       ctx.fillStyle = rgba('#ffffff', fa * 0.55);

@@ -11,12 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let isAutoScrolling = false; // Prevents scroll triggers from hijacking during a programmatic click jump
     let startX = 0;
     let downTarget = null;
+    let lastPointerClientX = 0;
 
     // Physics & Lerp variables
     let startPillTx = 0;
     let dragTargetX = 0;
     let dragCurrentX = 0;
-    let dragRaf;
+    let dragRaf = 0;
 
     function updatePill(index, animate = true, isClick = true) {
         if (!items[index]) return;
@@ -48,7 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Physics Loop for dragging
     function dragLoop() {
-        if (!isPointerDown) return;
+        if (!isPointerDown) {
+            dragRaf = 0;
+            return;
+        }
 
         // Interpolate for heavy "syrup" lag feel (lower = heavier)
         dragCurrentX += (dragTargetX - dragCurrentX) * 0.2;
@@ -64,6 +68,50 @@ document.addEventListener('DOMContentLoaded', () => {
         pill.style.transform = `translateX(${dragCurrentX}px) scale(${stretchX}, ${squashY})`;
 
         dragRaf = requestAnimationFrame(dragLoop);
+    }
+
+    function cancelDragLoop() {
+        if (!dragRaf) return;
+        cancelAnimationFrame(dragRaf);
+        dragRaf = 0;
+    }
+
+    function getDropIndexFromClientX(clientX) {
+        const navItems = Array.from(items);
+        if (!navItems.length) return activeIndex;
+
+        const rects = navItems.map((item) => item.getBoundingClientRect());
+        if (Number.isFinite(clientX)) {
+            const exactHitIndex = rects.findIndex((rect) => clientX >= rect.left && clientX <= rect.right);
+            if (exactHitIndex !== -1) return exactHitIndex;
+
+            let closestIndex = 0;
+            let minDistance = Infinity;
+            rects.forEach((rect, index) => {
+                const center = rect.left + (rect.width / 2);
+                const distance = Math.abs(clientX - center);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestIndex = index;
+                }
+            });
+            return closestIndex;
+        }
+
+        const pillRect = pill.getBoundingClientRect();
+        const fallbackCenterX = pillRect.left + (pillRect.width / 2);
+
+        let closestIndex = 0;
+        let minDistance = Infinity;
+        rects.forEach((rect, index) => {
+            const center = rect.left + (rect.width / 2);
+            const distance = Math.abs(fallbackCenterX - center);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestIndex = index;
+            }
+        });
+        return closestIndex;
     }
 
     // Intercept clicks strictly to prevent native jumping
@@ -86,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isDragging = false;
         dragOccurred = false;
         startX = e.clientX;
+        lastPointerClientX = e.clientX;
         downTarget = e.target.closest('.nav-item'); // Remember what was clicked
 
         const matrix = new DOMMatrix(window.getComputedStyle(pill).transform);
@@ -100,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     nav.addEventListener('pointermove', (e) => {
         if (!isPointerDown) return;
+        lastPointerClientX = e.clientX;
 
         const deltaX = e.clientX - startX;
 
@@ -129,6 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isPointerDown) return;
         isPointerDown = false;
         nav.releasePointerCapture(e.pointerId);
+        const didDrag = isDragging;
+        isDragging = false;
 
         const triggerScroll = (index) => {
             const targetHref = items[index].getAttribute('href');
@@ -159,25 +211,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 50);
         };
 
-        if (isDragging) {
-            cancelAnimationFrame(dragRaf);
-
-            // Find the closest pill based on visual dropped position
-            const pillCenter = dragCurrentX + (pill.offsetWidth / 2);
-
-            let closestIndex = 0;
-            let minDistance = Infinity;
-
-            items.forEach((item, index) => {
-                const itemCenter = item.offsetLeft + (item.offsetWidth / 2);
-                const dist = Math.abs(pillCenter - itemCenter);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    closestIndex = index;
-                }
-            });
-
-            activeIndex = closestIndex;
+        if (didDrag) {
+            cancelDragLoop();
+            const releaseX = Number.isFinite(e.clientX) ? e.clientX : lastPointerClientX;
+            activeIndex = getDropIndexFromClientX(releaseX);
             updatePill(activeIndex, true, false); // Snap, but no extra click-stretch
             triggerScroll(activeIndex);
 
@@ -194,8 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
     nav.addEventListener('pointercancel', () => {
         if (!isPointerDown) return;
         isPointerDown = false;
+        isDragging = false;
         dragOccurred = false;
-        cancelAnimationFrame(dragRaf);
+        cancelDragLoop();
         updatePill(activeIndex, true, false);
     });
 

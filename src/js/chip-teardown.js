@@ -12,12 +12,14 @@ gsap.registerPlugin(ScrollTrigger);
 
 const gltfLoader = new GLTFLoader();
 const draco = new DRACOLoader();
-const MODEL_URL = new URL('../../Two_Level_Cache_Draco.glb', import.meta.url).href;
+const MODEL_URL_FULL = new URL('../../Two_Level_Cache_Draco.glb', import.meta.url).href;
+const MODEL_URL_LITE = new URL('../../Two_Level_Cache_Draco_Lite.glb', import.meta.url).href;
 draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/');
 gltfLoader.setDRACOLoader(draco);
 
 let cachedGLTF = null;
 let gltfLoadPromise = null;
+let selectedModelUrl = '';
 
 let renderer = null;
 let scene = null;
@@ -41,21 +43,64 @@ const LAYER_COLORS = [
   0x10b981, 0x0ea5e9
 ];
 
-function ensureGLTFLoaded() {
-  if (cachedGLTF) return Promise.resolve(cachedGLTF);
-  if (gltfLoadPromise) return gltfLoadPromise;
+function shouldUseLiteModel() {
+  const perfMode = document.body && document.body.dataset
+    ? document.body.dataset.perfMode
+    : 'full';
+  if (perfMode === 'lite') return true;
 
-  gltfLoadPromise = new Promise((resolve, reject) => {
+  const lowMemory = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 6;
+  const lowCpu = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 6;
+  const smallViewport = window.matchMedia('(max-width: 900px)').matches;
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const saveData = !!(connection && connection.saveData);
+  const slowNetwork = !!(
+    connection &&
+    typeof connection.effectiveType === 'string' &&
+    /(^2g$|^slow-2g$|^3g$)/i.test(connection.effectiveType)
+  );
+
+  return lowMemory || lowCpu || smallViewport || saveData || slowNetwork;
+}
+
+function resolveModelUrl() {
+  if (selectedModelUrl) return selectedModelUrl;
+  selectedModelUrl = shouldUseLiteModel() ? MODEL_URL_LITE : MODEL_URL_FULL;
+  return selectedModelUrl;
+}
+
+function loadModel(url) {
+  return new Promise((resolve, reject) => {
     gltfLoader.load(
-      MODEL_URL,
-      (gltf) => {
-        cachedGLTF = gltf;
-        resolve(gltf);
-      },
+      url,
+      (gltf) => resolve(gltf),
       undefined,
       (err) => reject(err)
     );
   });
+}
+
+function ensureGLTFLoaded() {
+  if (cachedGLTF) return Promise.resolve(cachedGLTF);
+  if (gltfLoadPromise) return gltfLoadPromise;
+  const modelUrl = resolveModelUrl();
+
+  gltfLoadPromise = loadModel(modelUrl)
+    .catch((err) => {
+      if (modelUrl === MODEL_URL_LITE) {
+        selectedModelUrl = MODEL_URL_FULL;
+        return loadModel(MODEL_URL_FULL);
+      }
+      throw err;
+    })
+    .then((gltf) => {
+      cachedGLTF = gltf;
+      return gltf;
+    })
+    .catch((err) => {
+      gltfLoadPromise = null;
+      throw err;
+    });
 
   return gltfLoadPromise;
 }
@@ -208,7 +253,7 @@ function buildTimeline(scroller, spacer) {
       scroller,
       start: 'top top',
       end: 'bottom top',
-      scrub: 0.8,
+      scrub: 0.85,
       invalidateOnRefresh: true,
     }
   });
