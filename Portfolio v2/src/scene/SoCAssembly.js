@@ -18,6 +18,7 @@ import {
  */
 
 const USE_EXTERNAL_MODEL = false;
+const PUBLIC_ASSET_BASE = import.meta.env.BASE_URL;
 
 /* ── Color palette ──────────────────────────────── */
 const COL = {
@@ -62,7 +63,7 @@ export class SoCAssembly {
   _loadGLTF() {
     const loader = new GLTFLoader();
     loader.load(
-      '/models/soc_model.glb',
+      `${PUBLIC_ASSET_BASE}models/soc_model.glb`,
       (gltf) => {
         const model = gltf.scene;
         model.traverse((child) => {
@@ -320,7 +321,7 @@ export class SoCAssembly {
       polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
     });
     const texLoader = new THREE.TextureLoader();
-    texLoader.load('/textures/die_macro_photo.png', (tex) => {
+    texLoader.load(`${PUBLIC_ASSET_BASE}textures/die_macro_photo.png`, (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace;
       floorMat.map = tex;
       floorMat.color.set(0x7a7f86);
