@@ -9,7 +9,7 @@ export class SceneManager {
     this.camera = new THREE.PerspectiveCamera(
       45, window.innerWidth / window.innerHeight, 0.01, 200
     );
-    this.camera.position.set(8, 5, 0);
+    this.camera.position.set(10.2, 3.6, -0.9);
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -31,7 +31,7 @@ export class SceneManager {
     environmentScene.dispose();
     pmremGenerator.dispose();
 
-    this.cameraTarget = new THREE.Vector3(0, 0, 0);
+    this.cameraTarget = new THREE.Vector3(2.6, 0.02, 0);
 
     window.addEventListener('resize', () => this._onResize());
   }

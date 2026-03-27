@@ -3,9 +3,11 @@ import { SceneManager }        from './scene/SceneManager';
 import { SoCAssembly }         from './scene/SoCAssembly';
 import { DataTraces }          from './scene/DataTraces';
 import { ChipTour }            from './scene/ChipTour';
+import { DeviceFrame }         from './scene/DeviceFrame';
 import { setupLighting }       from './scene/Lighting';
 import { setupPortfolioMotion } from './portfolioMotion';
 import { createScrollTimeline } from './scroll/ScrollTimeline';
+import { createDebugGUI }       from './debugGUI';
 
 /* ── Initialise Three.js ───────────────────────── */
 const canvas       = document.getElementById('webgl-canvas');
@@ -24,33 +26,52 @@ const dataTraces = new DataTraces(scene, assembly);
 /* ── Guided Chip Tour ──────────────────────────── */
 const chipTour = new ChipTour(assembly);
 
-/* ── Scroll-driven 4-stage timeline ────────────── */
-createScrollTimeline({ camera, cameraTarget, assembly, dataTraces, chipTour });
-setupPortfolioMotion();
+/* ── Asynchronous Initialization Bootloader ──────── */
+async function init() {
+  /* ── Device Frame (shown in Contact section) ───── */
+  const deviceFrame = new DeviceFrame(scene);
+  
+  // Explicitly freeze the matrix thread until the massive 3D .glb package safely loads 
+  // into the user's browser payload pipeline natively across standard HTTP limits!
+  await deviceFrame.load();
 
-/* ── Mouse parallax (subtle, non-destructive) ──── */
-const mouseTarget = { x: 0, y: 0 };
-window.addEventListener('mousemove', (e) => {
-  mouseTarget.x = (e.clientX / window.innerWidth  - 0.5) * 0.12;
-  mouseTarget.y = (e.clientY / window.innerHeight - 0.5) * 0.12;
-});
+  /* ── Scroll-driven 4-stage timeline ────────────── */
+  createScrollTimeline({ camera, cameraTarget, assembly, dataTraces, chipTour, deviceFrame });
+  setupPortfolioMotion();
 
-/* ── Render loop ───────────────────────────────── */
-let clock = 0;
-const parallax = { x: 0, y: 0 };
-function animate() {
-  requestAnimationFrame(animate);
-  clock += 0.016;
+  /* ── Debug GUI (press H to toggle) ─────────────── */
+  // createDebugGUI({ camera, cameraTarget, assembly, deviceFrame });
 
-  // Update data trace shader time
-  dataTraces.update(clock);
+  /* ── Mouse parallax (subtle, non-destructive) ──── */
+  const mouseTarget = { x: 0, y: 0 };
+  window.addEventListener('mousemove', (e) => {
+    mouseTarget.x = (e.clientX / window.innerWidth  - 0.5) * 0.12;
+    mouseTarget.y = (e.clientY / window.innerHeight - 0.5) * 0.12;
+  });
 
-  // Smooth-lerp a separate parallax offset (never mutate cameraTarget)
-  parallax.x += (mouseTarget.x - parallax.x) * 0.03;
-  parallax.y += (-mouseTarget.y - parallax.y) * 0.03;
+  /* ── Render loop ───────────────────────────────── */
+  let clock = 0;
+  const parallax = { x: 0, y: 0 };
+  
+  function animate() {
+    requestAnimationFrame(animate);
+    clock += 0.016;
 
-  // Pass the offset to the renderer which adds it at lookAt time
-  sceneManager.render(parallax.x, parallax.y);
-  chipTour.update(camera);
+    // Stream universal timestamps to custom shaders
+    dataTraces.update(clock);
+    deviceFrame.update(clock);
+
+    // Smooth-lerp a separate parallax offset (never mutate cameraTarget)
+    parallax.x += (mouseTarget.x - parallax.x) * 0.03;
+    parallax.y += (-mouseTarget.y - parallax.y) * 0.03;
+
+    // Pass the offset to the renderer which adds it at lookAt time
+    sceneManager.render(parallax.x, parallax.y);
+    chipTour.update(camera);
+  }
+  
+  animate();
 }
-animate();
+
+// Fire the deployment
+init();

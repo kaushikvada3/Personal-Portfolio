@@ -186,7 +186,7 @@ export function setupPortfolioMotion() {
     });
   });
 
-  animatePanel(document.getElementById('section-architecture'), '.label-mono, .timeline-entry');
+  animatePanel(document.getElementById('section-architecture'), '.label-mono, .timeline-entry, .experience-skill');
   animatePanel(document.getElementById('section-projects'), '.label-mono, .project-card');
   animatePanel(document.getElementById('section-contact'), '.label-mono, .contact-intro, .contact-item, .contact-footer');
 

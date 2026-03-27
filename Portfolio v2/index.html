@@ -93,56 +93,75 @@
 
     <!-- Stage 2: Career Pipeline -->
     <section class="scroll-section" id="section-architecture">
-      <div class="content-panel glass-panel panel-right">
+      <div class="content-panel glass-panel panel-right experience-panel">
         <span class="label-mono">EXPERIENCE</span>
         <h2 class="section-heading">Experience</h2>
-        <div class="timeline-entry">
-          <div class="timeline-dot active"></div>
-          <div class="timeline-body">
-            <span class="timeline-date">STARTING JUNE 2026</span>
-            <h3 class="timeline-title">Incoming Implementation Engineer Intern</h3>
-            <div class="timeline-company-row">
-              <span class="company-logo-badge company-logo-badge-arm">
-                <img class="company-logo company-logo-arm" src="./arm_logo.png" alt="Arm logo" loading="lazy" decoding="async">
-              </span>
-              <span class="timeline-company">ARM // San Diego, CA</span>
+        <div class="experience-timeline">
+          <article class="timeline-entry timeline-entry-active">
+            <div class="timeline-marker" aria-hidden="true">
+              <span class="timeline-dot active"></span>
             </div>
-            <p class="timeline-detail">Planned focus on physical design and implementation for CPU/GPU cores and SoCs, including synthesis, floorplanning, place and route, static timing analysis, verification, and PPAT trade-off analysis.</p>
-          </div>
-        </div>
-        <div class="timeline-entry">
-          <div class="timeline-dot"></div>
-          <div class="timeline-body">
-            <span class="timeline-date">JUN 2025 - AUG 2025</span>
-            <h3 class="timeline-title">Hardware Design Intern</h3>
-            <div class="timeline-company-row">
-              <span class="company-logo-badge company-logo-badge-dft">
-                <img class="company-logo company-logo-dft" src="./DFT_logo.png" alt="Digital Force Technologies logo" loading="lazy" decoding="async">
-              </span>
-              <span class="timeline-company">Digital Force Technologies (DFT) // San Diego, CA</span>
+            <div class="timeline-stack">
+              <span class="timeline-date">STARTING JUNE 2026</span>
+              <div class="timeline-card">
+                <h3 class="timeline-title">Incoming Implementation Engineer Intern</h3>
+                <div class="timeline-company-row">
+                  <span class="company-logo-badge company-logo-badge-arm">
+                    <img class="company-logo company-logo-arm" src="./arm_logo.png" alt="Arm logo" loading="lazy" decoding="async">
+                  </span>
+                  <span class="timeline-company">ARM // San Diego, CA</span>
+                </div>
+                <p class="timeline-detail">Planned focus on physical design and implementation for CPU/GPU cores and SoCs, including synthesis, floorplanning, place and route, static timing analysis, verification, and PPAT trade-off analysis.</p>
+              </div>
             </div>
-            <p class="timeline-detail">Implemented instruction fetch, instruction decode, and ALU RTL for a custom RISC-V FPGA processor, then verified behavior through simulation, waveform inspection, and iterative debugging.</p>
-          </div>
+          </article>
+
+          <article class="timeline-entry">
+            <div class="timeline-marker" aria-hidden="true">
+              <span class="timeline-dot"></span>
+            </div>
+            <div class="timeline-stack">
+              <span class="timeline-date">JUN 2025 - AUG 2025</span>
+              <div class="timeline-card">
+                <h3 class="timeline-title">Hardware Design Intern</h3>
+                <div class="timeline-company-row">
+                  <span class="company-logo-badge company-logo-badge-dft">
+                    <img class="company-logo company-logo-dft" src="./DFT_logo.png" alt="Digital Force Technologies logo" loading="lazy" decoding="async">
+                  </span>
+                  <span class="timeline-company">Digital Force Technologies (DFT) // San Diego, CA</span>
+                </div>
+                <p class="timeline-detail">Implemented instruction fetch, instruction decode, and ALU RTL for a custom RISC-V FPGA processor, then verified behavior through simulation, waveform inspection, and iterative debugging.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="timeline-entry">
+            <div class="timeline-marker" aria-hidden="true">
+              <span class="timeline-dot"></span>
+            </div>
+            <div class="timeline-stack">
+              <span class="timeline-date">SEP 2025 - PRESENT</span>
+              <div class="timeline-card">
+                <h3 class="timeline-title">Undergraduate Researcher</h3>
+                <div class="timeline-company-row timeline-company-row-text">
+                  <span class="timeline-company">VSCLab, UC Riverside // Riverside, CA</span>
+                </div>
+                <p class="timeline-detail">Developing an open-source RISC-V CPU core and verification infrastructure while building proficiency in constraint-driven synthesis flows and SDC timing constraints in Synopsys Design Compiler.</p>
+              </div>
+            </div>
+          </article>
         </div>
-        <div class="timeline-entry">
-          <div class="timeline-dot"></div>
-          <div class="timeline-body">
-            <span class="timeline-date">SEP 2025 - PRESENT</span>
-            <h3 class="timeline-title">Undergraduate Researcher</h3>
-            <span class="timeline-company">VSCLab, UC Riverside // Riverside, CA</span>
-            <p class="timeline-detail">Developing an open-source RISC-V CPU core and verification infrastructure while building proficiency in constraint-driven synthesis flows and SDC timing constraints in Synopsys Design Compiler.</p>
-          </div>
-        </div>
+
         <div class="experience-skills">
           <span class="label-mono">SKILLS</span>
-          <div class="hero-tags">
-            <span class="tag">Verilog</span>
-            <span class="tag">C/C++</span>
-            <span class="tag">Python</span>
-            <span class="tag">Synopsys DC</span>
-            <span class="tag">Synopsys VCS</span>
-            <span class="tag">Fusion Compiler</span>
-            <span class="tag">Vivado</span>
+          <div class="experience-skill-grid">
+            <span class="experience-skill" data-icon="RTL">Verilog</span>
+            <span class="experience-skill" data-icon="{C}">C/C++</span>
+            <span class="experience-skill" data-icon="Py">Python</span>
+            <span class="experience-skill" data-icon="DC">Synopsys DC</span>
+            <span class="experience-skill" data-icon="VCS">Synopsys VCS</span>
+            <span class="experience-skill" data-icon="FC">Fusion Compiler</span>
+            <span class="experience-skill" data-icon="FPGA">Vivado</span>
           </div>
         </div>
       </div>
@@ -150,7 +169,7 @@
 
     <!-- Stage 3: Projects -->
     <section class="scroll-section" id="section-projects">
-      <div class="content-panel glass-panel">
+      <div class="content-panel glass-panel project-panel">
         <span class="label-mono">SELECTED PROJECTS</span>
         <h2 class="section-heading">Projects</h2>
         <div class="project-card">
@@ -179,7 +198,7 @@
 
     <!-- Stage 4: Contact -->
     <section class="scroll-section" id="section-contact">
-      <div class="content-panel glass-panel panel-center">
+      <div class="content-panel glass-panel panel-center contact-panel">
         <span class="label-mono">CONTACT</span>
         <h2 class="section-heading">Contact</h2>
         <p class="contact-intro">Open to conversations around RTL design, computer architecture, VLSI implementation, and hardware engineering opportunities.</p>
