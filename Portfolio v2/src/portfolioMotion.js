@@ -93,14 +93,16 @@ export function setupPortfolioMotion() {
   heroTimeline
     .from('.top-bar-identity', {
       y: -18,
-      opacity: 0,
+      autoAlpha: 0,
       duration: 0.35,
+      clearProps: 'opacity,visibility,transform',
     })
     .from('.top-bar-nav .nav-link', {
-      y: -14,
-      opacity: 0,
+      y: -10,
+      autoAlpha: 0,
       duration: 0.3,
-      stagger: 0.04,
+      stagger: 0.05,
+      clearProps: 'opacity,visibility,transform',
     }, '-=0.18')
     .from('.hero-kicker .label-mono', {
       y: 16,
@@ -189,6 +191,23 @@ export function setupPortfolioMotion() {
   animatePanel(document.getElementById('section-architecture'), '.label-mono, .timeline-entry, .skills-board, .skill-cluster-title, .skill-card');
   animatePanel(document.getElementById('section-projects'), '.label-mono, .project-card');
   animatePanel(document.getElementById('section-contact'), '.contact-header, .interface-row, .btn-primary, .btn-secondary, .meta-item, .contact-footer');
+
+  // Active nav link tracking
+  const navLinks = document.querySelectorAll('.nav-link');
+  const sections = document.querySelectorAll('.scroll-section');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const id = entry.target.id;
+      navLinks.forEach((link) => {
+        const href = link.getAttribute('href');
+        link.classList.toggle('active', href === `#${id}`);
+      });
+    });
+  }, { threshold: 0.4 });
+
+  sections.forEach((s) => observer.observe(s));
 
   ScrollTrigger.refresh();
 }
