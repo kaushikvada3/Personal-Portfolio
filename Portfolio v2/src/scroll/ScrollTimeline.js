@@ -185,6 +185,12 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
       ease: 'power1.out',
     }, 27);
 
+    masterTl.to(dataTraces.material.uniforms.uIntensity, {
+      value: 1.18,
+      duration: 16,
+      ease: 'power1.out',
+    }, 27);
+
     /* ── STAGE 3: Micro-Zoom into Die (50 → 75) ─── */
     // Shift model for projects framing
     masterTl.to(assembly.group.position, {
@@ -232,16 +238,61 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
       }
     });
 
+    // Keep signals active as soon as the Projects section enters frame.
+    masterTl.to(dataTraces.material.uniforms.uOpacity, {
+      value: 1.2,
+      duration: 10,
+      ease: 'power2.inOut',
+    }, 48);
+
+    masterTl.to(dataTraces.material.uniforms.uIntensity, {
+      value: 1.0,
+      duration: 10,
+      ease: 'power2.inOut',
+    }, 48);
+
+    masterTl.to(dataTraces.material.uniforms.uActivity, {
+      value: 0.7,
+      duration: 10,
+      ease: 'power2.inOut',
+    }, 48);
+
     // Push traces closer to full visibility once the camera reaches the die.
     masterTl.to(dataTraces.material.uniforms.uOpacity, {
-      value: 1.08,
+      value: 1.2,
       duration: 15,
       ease: 'power2.out',
     }, 58);
 
+    // Peak the signal readout during the Projects close-up.
+    masterTl.to(dataTraces.material.uniforms.uIntensity, {
+      value: 1.1,
+      duration: 14,
+      ease: 'power2.inOut',
+    }, 52);
+
+    masterTl.to(dataTraces.material.uniforms.uActivity, {
+      value: 0.9,
+      duration: 15,
+      ease: 'power2.inOut',
+    }, 52);
+
     /* ── STAGE 4: Collapse + Device Encapsulation (75 → 100) ──── */
     const contactDeviceX = 1.65;
     const originalOffsets = [-0.3, -0.08, 0.1, 0.22, 0.45];
+
+    // Reset activity to idle as we collapse
+    masterTl.to(dataTraces.material.uniforms.uActivity, {
+      value: 0,
+      duration: 8,
+      ease: 'power2.inOut',
+    }, 73);
+
+    masterTl.to(dataTraces.material.uniforms.uIntensity, {
+      value: 1.05,
+      duration: 8,
+      ease: 'power2.inOut',
+    }, 73);
 
     // Collapse all layers back to their original procedural positions
     layers.forEach((layer, i) => {

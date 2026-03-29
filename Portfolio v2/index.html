@@ -7,9 +7,19 @@
   <meta name="description" content="Kaushik Vada — Electrical Engineering, VLSI & Hardware Design Portfolio">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Space+Grotesk:wght@300..700&family=Space+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Space+Mono&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="loading">
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loading-content">
+      <div class="loading-text label-mono">INITIALIZING SYSTEM... <span id="loading-progress">0%</span></div>
+      <div class="loading-bar-container">
+        <div id="loading-bar"></div>
+      </div>
+    </div>
+  </div>
+
   <canvas id="webgl-canvas"></canvas>
 
   <!-- Fixed Top Bar -->
@@ -94,55 +104,104 @@
     <!-- Stage 2: Career Pipeline -->
     <section class="scroll-section" id="section-architecture">
       <div class="content-panel glass-panel panel-right experience-panel">
-        <span class="label-mono">EXPERIENCE</span>
-        <h2 class="section-heading">Experience</h2>
+        <div class="panel-header panel-header-experience">
+          <div class="experience-kicker">
+            <span class="label-mono">EXPERIENCE</span>
+            <span class="experience-kicker-line" aria-hidden="true"></span>
+          </div>
+          <h2 class="section-heading">Experience</h2>
+          <p class="experience-intro">
+            Building toward backend silicon implementation through industry internships, FPGA RTL development,
+            and ASIC-focused research.
+          </p>
+        </div>
         <div class="experience-timeline">
           <article class="timeline-entry timeline-entry-active">
             <div class="timeline-marker" aria-hidden="true">
               <span class="timeline-dot active"></span>
             </div>
             <div class="timeline-stack">
-              <span class="timeline-date">STARTING JUNE 2026</span>
               <div class="timeline-card">
+                <div class="timeline-card-header">
+                  <div class="timeline-company-row">
+                    <span class="company-logo-badge company-logo-badge-arm">
+                      <img class="company-logo company-logo-arm" src="./arm_logo.png" alt="Arm logo" loading="lazy" decoding="async">
+                    </span>
+                    <span class="timeline-company">ARM</span>
+                    <span class="timeline-separator" aria-hidden="true"></span>
+                    <span class="timeline-location">San Diego, CA</span>
+                  </div>
+                  <div class="timeline-card-stamps">
+                    <span class="timeline-date">Starting June 2026</span>
+                    <span class="timeline-status timeline-status-upcoming">Incoming</span>
+                  </div>
+                </div>
                 <h3 class="timeline-title">Incoming Implementation Engineer Intern</h3>
-                <div class="timeline-company-row">
-                  <span class="company-logo-badge company-logo-badge-arm">
-                    <img class="company-logo company-logo-arm" src="./arm_logo.png" alt="Arm logo" loading="lazy" decoding="async">
-                  </span>
-                  <span class="timeline-company">ARM // San Diego, CA</span>
+                <div class="timeline-tag-row" aria-label="Expected focus areas">
+                  <span class="timeline-tag">STA</span>
+                  <span class="timeline-tag">Floorplanning</span>
+                  <span class="timeline-tag">PnR</span>
+                  <span class="timeline-tag">Timing Closure</span>
                 </div>
               </div>
             </div>
           </article>
 
-          <article class="timeline-entry">
+          <article class="timeline-entry timeline-entry-current">
             <div class="timeline-marker" aria-hidden="true">
               <span class="timeline-dot"></span>
             </div>
             <div class="timeline-stack">
-              <span class="timeline-date">JUN 2025 - AUG 2025</span>
               <div class="timeline-card">
-                <h3 class="timeline-title">Hardware Design Intern</h3>
-                <div class="timeline-company-row">
-                  <span class="company-logo-badge company-logo-badge-dft">
-                    <img class="company-logo company-logo-dft" src="./DFT_logo.png" alt="Digital Force Technologies logo" loading="lazy" decoding="async">
-                  </span>
-                  <span class="timeline-company">Digital Force Technologies (DFT) // San Diego, CA</span>
+                <div class="timeline-card-header">
+                  <div class="timeline-company-row">
+                    <span class="company-logo-badge company-logo-badge-text">VLSI</span>
+                    <span class="timeline-company">VLSI System and Computation Lab</span>
+                    <span class="timeline-separator" aria-hidden="true"></span>
+                    <span class="timeline-location">Riverside, CA</span>
+                  </div>
+                  <div class="timeline-card-stamps">
+                    <span class="timeline-date">Sep 2025 - Present</span>
+                    <span class="timeline-status timeline-status-current">Current</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-marker" aria-hidden="true">
-              <span class="timeline-dot"></span>
-            </div>
-            <div class="timeline-stack">
-              <span class="timeline-date">SEP 2025 - PRESENT</span>
-              <div class="timeline-card">
                 <h3 class="timeline-title">ASIC Undergraduate Researcher</h3>
-                <div class="timeline-company-row timeline-company-row-text">
-                  <span class="timeline-company">VLSI System and Computation Lab, UC Riverside // Riverside, CA</span>
+                <div class="timeline-tag-row" aria-label="Focus areas">
+                  <span class="timeline-tag">RISC-V</span>
+                  <span class="timeline-tag">RTL-to-Gates</span>
+                  <span class="timeline-tag">SDC</span>
+                  <span class="timeline-tag">PPA Analysis</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="timeline-entry timeline-entry-completed">
+            <div class="timeline-marker" aria-hidden="true">
+              <span class="timeline-dot"></span>
+            </div>
+            <div class="timeline-stack">
+              <div class="timeline-card">
+                <div class="timeline-card-header">
+                  <div class="timeline-company-row">
+                    <span class="company-logo-badge company-logo-badge-dft">
+                      <img class="company-logo company-logo-dft" src="./DFT_logo.png" alt="Digital Force Technologies logo" loading="lazy" decoding="async">
+                    </span>
+                    <span class="timeline-company">Digital Force Technologies</span>
+                    <span class="timeline-separator" aria-hidden="true"></span>
+                    <span class="timeline-location">San Diego, CA</span>
+                  </div>
+                  <div class="timeline-card-stamps">
+                    <span class="timeline-date">Jun 2025 - Aug 2025</span>
+                    <span class="timeline-status timeline-status-completed">Completed</span>
+                  </div>
+                </div>
+                <h3 class="timeline-title">Hardware Design Intern</h3>
+                <div class="timeline-tag-row" aria-label="Core tools and topics">
+                  <span class="timeline-tag">Verilog</span>
+                  <span class="timeline-tag">FPGA</span>
+                  <span class="timeline-tag">Vivado</span>
+                  <span class="timeline-tag">Verification</span>
                 </div>
               </div>
             </div>
@@ -150,15 +209,30 @@
         </div>
 
         <div class="experience-skills">
-          <span class="label-mono">SKILLS</span>
-          <div class="experience-skill-grid">
-            <span class="experience-skill" data-icon="RTL">Verilog</span>
-            <span class="experience-skill" data-icon="{C}">C/C++</span>
-            <span class="experience-skill" data-icon="Py">Python</span>
-            <span class="experience-skill" data-icon="DC">Synopsys DC</span>
-            <span class="experience-skill" data-icon="VCS">Synopsys VCS</span>
-            <span class="experience-skill" data-icon="FC">Fusion Compiler</span>
-            <span class="experience-skill" data-icon="FPGA">Vivado</span>
+          <div class="skills-board">
+            <div class="skills-board-header">
+              <span class="label-mono">HARDWARE_STACK // TOOLS</span>
+            </div>
+            <div class="skills-clusters">
+              <div class="skill-cluster">
+                <span class="skill-cluster-title">// Languages</span>
+                <div class="skill-tag-row">
+                  <span class="skill-tag">Verilog</span>
+                  <span class="skill-tag">C/C++</span>
+                  <span class="skill-tag">Python</span>
+                </div>
+              </div>
+              <div class="skill-cluster">
+                <span class="skill-cluster-title">// EDA Tools</span>
+                <div class="skill-tag-row">
+                  <span class="skill-tag">Synopsys DC</span>
+                  <span class="skill-tag">Synopsys Fusion Compiler</span>
+                  <span class="skill-tag">VCS / FC</span>
+                  <span class="skill-tag">Vivado</span>
+                </div>
+              </div>
+            </div>
+            <span class="skills-board-spark" aria-hidden="true"></span>
           </div>
         </div>
       </div>
@@ -167,7 +241,10 @@
     <!-- Stage 3: Projects -->
     <section class="scroll-section" id="section-projects">
       <div class="content-panel glass-panel project-panel">
-        <span class="label-mono">SELECTED PROJECTS</span>
+        <div class="experience-kicker">
+          <span class="label-mono">SELECTED PROJECTS</span>
+          <span class="experience-kicker-line" aria-hidden="true"></span>
+        </div>
         <h2 class="section-heading">Projects</h2>
         <div class="project-card">
           <span class="project-label">GRAPHICS ACCELERATOR</span>
@@ -196,29 +273,73 @@
     <!-- Stage 4: Contact -->
     <section class="scroll-section" id="section-contact">
       <div class="content-panel glass-panel panel-center contact-panel">
-        <span class="label-mono">CONTACT</span>
-        <h2 class="section-heading">Contact</h2>
-        <p class="contact-intro">Open to conversations around RTL design, computer architecture, VLSI implementation, and hardware engineering opportunities.</p>
-        <div class="contact-grid">
-          <div class="contact-item">
-            <span class="contact-label">EMAIL</span>
-            <a class="contact-link" href="mailto:kaushikvada3@gmail.com">kaushikvada3@gmail.com</a>
+        <div class="contact-header">
+          <div class="experience-kicker">
+            <span class="label-mono">SYSTEM_INTERFACE // V2.0</span>
+            <span class="experience-kicker-line" aria-hidden="true"></span>
           </div>
-          <div class="contact-item">
-            <span class="contact-label">PHONE</span>
-            <a class="contact-link" href="tel:+18583058647">858-305-8647</a>
+          <h2 class="section-heading">Contact</h2>
+          <p class="contact-intro">Open to discussions regarding RTL design, hardware architecture, and VLSI implementation opportunities.</p>
+        </div>
+
+        <div class="contact-interface">
+          <div class="interface-row">
+            <span class="interface-label">COMM_PORT_01</span>
+            <div class="interface-value-group">
+              <span class="interface-sub-label">EMAIL</span>
+              <a class="interface-link" href="mailto:kaushikvada3@gmail.com">kaushikvada3@gmail.com</a>
+            </div>
           </div>
-          <div class="contact-item">
-            <span class="contact-label">LINKEDIN</span>
-            <a class="contact-link" href="https://www.linkedin.com/in/kaushikv198" target="_blank" rel="noreferrer">linkedin.com/in/kaushikv198</a>
+          <div class="interface-row">
+            <span class="interface-label">COMM_PORT_02</span>
+            <div class="interface-value-group">
+              <span class="interface-sub-label">LINKEDIN</span>
+              <a class="interface-link" href="https://www.linkedin.com/in/kaushikv198" target="_blank" rel="noreferrer">linkedin.com/in/kaushikv198</a>
+            </div>
           </div>
-          <div class="contact-item">
-            <span class="contact-label">LOCATION</span>
-            <span class="contact-value">Riverside, CA</span>
+          <div class="interface-row">
+            <span class="interface-label">COMM_PORT_03</span>
+            <div class="interface-value-group">
+              <span class="interface-sub-label">PHONE</span>
+              <a class="interface-link" href="tel:+18583058647">858-305-8647</a>
+            </div>
+          </div>
+          <div class="interface-row">
+            <span class="interface-label">GEO_LOC</span>
+            <div class="interface-value-group">
+              <span class="interface-sub-label">LOCATION</span>
+              <span class="interface-value">Riverside, CA</span>
+            </div>
           </div>
         </div>
+
+        <div class="contact-actions">
+          <a href="mailto:kaushikvada3@gmail.com" class="btn-primary">
+            <span class="btn-text">INITIALIZE_OUTREACH</span>
+            <span class="btn-icon">→</span>
+          </a>
+          <a href="./Kaushik_Vada_-_Resume(ARM).pdf" target="_blank" class="btn-secondary">
+            <span class="btn-text">FETCH_RESUME</span>
+          </a>
+        </div>
+
+        <div class="contact-metadata">
+          <div class="meta-item">
+            <span class="meta-label">STATUS</span>
+            <span class="meta-value pulse">ONLINE</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">BUILD</span>
+            <span class="meta-value">2026.03.27</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">ENCRYPTION</span>
+            <span class="meta-value">AES-256</span>
+          </div>
+        </div>
+
         <div class="contact-footer">
-          <span class="footer-copy">(C) 2026 KAUSHIK VADA // VLSI & HARDWARE DESIGN PORTFOLIO</span>
+          <span class="footer-copy">© 2026 KAUSHIK VADA // HARDWARE DESIGN PORTFOLIO</span>
         </div>
       </div>
     </section>

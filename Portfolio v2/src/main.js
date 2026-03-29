@@ -28,16 +28,34 @@ const chipTour = new ChipTour(assembly);
 
 /* ── Asynchronous Initialization Bootloader ──────── */
 async function init() {
+  const loadingScreen = document.getElementById('loading-screen');
+  const loadingBar = document.getElementById('loading-bar');
+  const loadingProgress = document.getElementById('loading-progress');
+
   /* ── Device Frame (shown in Contact section) ───── */
   const deviceFrame = new DeviceFrame(scene);
-  
-  // Explicitly freeze the matrix thread until the massive 3D .glb package safely loads 
+
+  // Explicitly freeze the matrix thread until the massive 3D .glb package safely loads
   // into the user's browser payload pipeline natively across standard HTTP limits!
-  await deviceFrame.load();
+  await deviceFrame.load((progress) => {
+    const percent = Math.round(progress * 100);
+    if (loadingBar) loadingBar.style.width = `${percent}%`;
+    if (loadingProgress) loadingProgress.textContent = `${percent}%`;
+  });
 
   /* ── Scroll-driven 4-stage timeline ────────────── */
   createScrollTimeline({ camera, cameraTarget, assembly, dataTraces, chipTour, deviceFrame });
   setupPortfolioMotion();
+
+  /* ── Hide Loading Screen ───────────────────────── */
+  if (loadingScreen) {
+    loadingScreen.style.opacity = '0';
+    loadingScreen.style.visibility = 'hidden';
+    setTimeout(() => {
+      loadingScreen.remove();
+      document.body.classList.remove('loading');
+    }, 800);
+  }
 
   /* ── Debug GUI (press H to toggle) ─────────────── */
   // createDebugGUI({ camera, cameraTarget, assembly, deviceFrame });
@@ -52,7 +70,7 @@ async function init() {
   /* ── Render loop ───────────────────────────────── */
   let clock = 0;
   const parallax = { x: 0, y: 0 };
-  
+
   function animate() {
     requestAnimationFrame(animate);
     clock += 0.016;
@@ -69,7 +87,7 @@ async function init() {
     sceneManager.render(parallax.x, parallax.y);
     chipTour.update(camera);
   }
-  
+
   animate();
 }
 

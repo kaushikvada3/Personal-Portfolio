@@ -318,7 +318,10 @@ export class SoCAssembly {
       clearcoat: 0.62,
       clearcoatRoughness: 0.28,
       envMapIntensity: 0.96,
-      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+      depthWrite: true,
+      polygonOffset: true, 
+      polygonOffsetFactor: -0.1, 
+      polygonOffsetUnits: -0.1,
     });
     const texLoader = new THREE.TextureLoader();
     texLoader.load(`${PUBLIC_ASSET_BASE}textures/die_macro_photo.png`, (tex) => {
@@ -543,10 +546,10 @@ export class SoCAssembly {
       opacity: 0.92,
       metalness: 0,
       roughness: 1,
-      depthWrite: false,
+      depthWrite: true,
       polygonOffset: true,
-      polygonOffsetFactor: -2,
-      polygonOffsetUnits: -2,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
     });
     const engraving = new THREE.Mesh(
       new THREE.PlaneGeometry(1.95, 0.42),

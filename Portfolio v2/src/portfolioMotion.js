@@ -94,64 +94,64 @@ export function setupPortfolioMotion() {
     .from('.top-bar-identity', {
       y: -18,
       opacity: 0,
-      duration: 0.55,
+      duration: 0.35,
     })
     .from('.top-bar-nav .nav-link', {
       y: -14,
       opacity: 0,
-      duration: 0.45,
-      stagger: 0.06,
-    }, '-=0.28')
+      duration: 0.3,
+      stagger: 0.04,
+    }, '-=0.18')
     .from('.hero-kicker .label-mono', {
       y: 16,
       opacity: 0,
       letterSpacing: '0.48em',
-      duration: 0.55,
-    }, '-=0.12')
+      duration: 0.35,
+    }, '-=0.08')
     .from('.hero-kicker-line', {
       scaleX: 0,
       opacity: 0,
-      duration: 0.75,
+      duration: 0.45,
       transformOrigin: 'left center',
-    }, '-=0.45')
+    }, '-=0.28')
     .from(primaryChars, {
       yPercent: 110,
       rotateX: -78,
       opacity: 0,
       filter: 'blur(10px)',
-      duration: 0.95,
-      stagger: 0.024,
-    }, '-=0.2')
+      duration: 0.6,
+      stagger: 0.015,
+    }, '-=0.15')
     .from(accentChars, {
       yPercent: 115,
       xPercent: 4,
       opacity: 0,
       filter: 'blur(12px)',
-      duration: 0.85,
-      stagger: 0.03,
-    }, '-=0.56')
+      duration: 0.55,
+      stagger: 0.018,
+    }, '-=0.38')
     .from('.hero-sub', {
       y: 24,
       opacity: 0,
-      duration: 0.55,
-    }, '-=0.42')
+      duration: 0.35,
+    }, '-=0.28')
     .from('.hero-highlights .hero-highlight', {
       y: 18,
       opacity: 0,
-      duration: 0.55,
-      stagger: 0.08,
-    }, '-=0.32')
+      duration: 0.35,
+      stagger: 0.05,
+    }, '-=0.2')
     .from('.hero-facts .hero-fact-card', {
       y: 18,
       opacity: 0,
-      duration: 0.62,
-      stagger: 0.08,
-    }, '-=0.42')
+      duration: 0.4,
+      stagger: 0.05,
+    }, '-=0.28')
     .from('.hero-scroll-indicator', {
       y: 12,
       opacity: 0,
-      duration: 0.45,
-    }, '-=0.2');
+      duration: 0.3,
+    }, '-=0.15');
 
   gsap.to('.hero-scroll-indicator', {
     autoAlpha: 0,
@@ -186,9 +186,9 @@ export function setupPortfolioMotion() {
     });
   });
 
-  animatePanel(document.getElementById('section-architecture'), '.label-mono, .timeline-entry, .experience-skill');
+  animatePanel(document.getElementById('section-architecture'), '.label-mono, .timeline-entry, .skills-board, .skill-cluster-title, .skill-card');
   animatePanel(document.getElementById('section-projects'), '.label-mono, .project-card');
-  animatePanel(document.getElementById('section-contact'), '.label-mono, .contact-intro, .contact-item, .contact-footer');
+  animatePanel(document.getElementById('section-contact'), '.contact-header, .interface-row, .btn-primary, .btn-secondary, .meta-item, .contact-footer');
 
   ScrollTrigger.refresh();
 }

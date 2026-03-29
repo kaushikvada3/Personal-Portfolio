@@ -29,7 +29,7 @@ export class DeviceFrame {
     scene.add(this.group);
   }
 
-  async load() {
+  async load(onProgress) {
     return new Promise((resolve, reject) => {
       const loader = new GLTFLoader();
       loader.load(
@@ -110,7 +110,11 @@ export class DeviceFrame {
 
           resolve(model);
         },
-        undefined,
+        (xhr) => {
+          if (onProgress && xhr.total > 0) {
+            onProgress(xhr.loaded / xhr.total);
+          }
+        },
         (error) => {
           console.error("GSAP DeviceFrame -> GLTF Payload failed:", error);
           reject(error);
