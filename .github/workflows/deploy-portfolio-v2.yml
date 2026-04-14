@@ -1,9 +1,12 @@
+# GitHub Pages serves ONLY the Vite production build from Portfolio v2/docs
+# (not the repo root, not Portfolio v3). Build output path is fixed in the job below.
 name: Deploy Portfolio v2 to GitHub Pages
 
 on:
   push:
     branches:
       - main
+      - eda-tool-theme
     paths:
       - 'Portfolio v2/**'
       - '.github/workflows/deploy-portfolio-v2.yml'
