@@ -10,13 +10,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Space+Mono&display=swap" rel="stylesheet">
 </head>
 <body class="loading">
-  <!-- Loading Screen -->
+  <!-- Loading Screen — silicon wafer fabrication (Canvas 2D, see WaferLoader.js) -->
   <div id="loading-screen">
     <div class="loading-content">
-      <div class="loading-text label-mono">INITIALIZING SYSTEM... <span id="loading-progress">0%</span></div>
-      <div class="loading-bar-container">
-        <div id="loading-bar"></div>
+      <div class="loading-wafer-wrap" aria-hidden="true">
+        <canvas id="loading-wafer-canvas" width="560" height="560"></canvas>
+        <div class="loading-yield-particles">
+          <span class="loading-particle"></span>
+          <span class="loading-particle"></span>
+          <span class="loading-particle"></span>
+          <span class="loading-particle"></span>
+          <span class="loading-particle"></span>
+          <span class="loading-particle"></span>
+        </div>
       </div>
+      <p class="loading-label label-mono" id="loading-label">INITIALIZING SYSTEM</p>
+      <p class="loading-hex label-mono"><span id="loading-progress">0x00</span></p>
     </div>
   </div>
 

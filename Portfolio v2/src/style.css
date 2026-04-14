@@ -90,41 +90,104 @@ body.loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.8s ease, visibility 0.8s ease;
+  transition:
+    opacity 0.8s var(--ease-out),
+    visibility 0.8s var(--ease-out);
+}
+
+#loading-screen.loading-screen--exiting .loading-wafer-wrap {
+  transform: scale(0.94);
+  opacity: 0.92;
 }
 
 .loading-content {
-  width: 240px;
+  width: min(320px, 88vw);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  gap: 20px;
 }
 
-.loading-text {
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  color: var(--gold);
-  text-align: center;
-}
-
-.loading-bar-container {
-  width: 100%;
-  height: 2px;
-  background: rgba(215, 179, 90, 0.15);
+.loading-wafer-wrap {
   position: relative;
-  overflow: hidden;
+  width: min(280px, 40vmin);
+  height: min(280px, 40vmin);
+  transition:
+    transform 0.85s var(--ease-out),
+    opacity 0.85s var(--ease-out);
 }
 
-#loading-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
+#loading-wafer-canvas {
+  display: block;
+  width: 100%;
   height: 100%;
-  width: 0%;
-  background: var(--gold);
-  box-shadow: 0 0 10px rgba(215, 179, 90, 0.6);
-  transition: width 0.2s ease-out;
+}
+
+.loading-label,
+.loading-hex {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-align: center;
+  margin: 0;
+}
+
+.loading-label {
+  color: rgba(214, 220, 228, 0.72);
+}
+
+.loading-hex {
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.loading-yield-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+#loading-screen.loading-screen--yield .loading-yield-particles {
+  opacity: 1;
+}
+
+.loading-particle {
+  position: absolute;
+  bottom: 42%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(224, 185, 108, 0.85);
+  box-shadow: 0 0 6px rgba(224, 185, 108, 0.5);
+  opacity: 0;
+  animation: loading-particle-rise 2.4s ease-in-out infinite;
+}
+
+#loading-screen.loading-screen--yield .loading-particle {
+  opacity: 1;
+}
+
+.loading-particle:nth-child(1) { left: 18%; animation-delay: 0s; }
+.loading-particle:nth-child(2) { left: 32%; animation-delay: 0.35s; }
+.loading-particle:nth-child(3) { left: 48%; animation-delay: 0.12s; }
+.loading-particle:nth-child(4) { left: 62%; animation-delay: 0.55s; }
+.loading-particle:nth-child(5) { left: 76%; animation-delay: 0.22s; }
+.loading-particle:nth-child(6) { left: 88%; animation-delay: 0.4s; }
+
+@keyframes loading-particle-rise {
+  0% {
+    transform: translateX(-50%) translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-18vh) scale(0.35);
+    opacity: 0;
+  }
 }
 
 /* ── HUD Frame ─────────────────────────────────── */
