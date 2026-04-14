@@ -1,6 +1,30 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+/** Next display frame — keeps the tab responsive during GPU uploads. */
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+/** Run when the main thread is quiet (with a cap so we never starve). */
+function idleYield() {
+  return new Promise((resolve) => {
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(() => resolve(), { timeout: 36 });
+    } else {
+      setTimeout(resolve, 12);
+    }
+  });
+}
+
+function triangleCount(geometry) {
+  if (!geometry) return 0;
+  const index = geometry.getIndex();
+  const pos = geometry.getAttribute('position');
+  if (index) return index.count / 3;
+  return (pos?.count ?? 0) / 3;
+}
+
 /**
  * iPhone-style device frame with Apple M1-style diffused chip glow.
  * 3-phase animation: x-ray → chip snap + glow → solidify
@@ -35,84 +59,11 @@ export class DeviceFrame {
       loader.load(
         '/iPhone Air Simple.glb',
         (gltf) => {
-          const model = gltf.scene;
-
-          // 1) First, capture the pure naked metric limits of the raw model geometry dynamically
-          const rawBbox = new THREE.Box3().setFromObject(model);
-          const rawSize = new THREE.Vector3();
-          rawBbox.getSize(rawSize);
-
-          // Find the absolute largest structural dimension natively exported from Blender (usually height or length)
-          const targetDepth = 5.36; // Strict bounding depth of an iPhone
-          const maxDim = Math.max(rawSize.x, rawSize.y, rawSize.z);
-          // Natively scale it so its largest axis precisely constraints to exactly 5.36, ensuring stability natively
-          const scaleFactor = maxDim > 0 ? (targetDepth / maxDim) : 1;
-          model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-          model.updateMatrixWorld(true);
-
-          // 2) Autonomously deduce spatial logic off post-scaled vectors!
-          const sBbox = new THREE.Box3().setFromObject(model);
-          const sSize = new THREE.Vector3();
-          sBbox.getSize(sSize);
-
-          // Mechanically autorotate the phone flat to match the GSAP timeline strictly
-          if (sSize.y > sSize.z && sSize.y > sSize.x) {
-            // It's standing up vertically (Y), pitch it down on its metallic spine natively onto Z!
-            model.rotation.x = -Math.PI / 2;
-          } else if (sSize.x > sSize.z && sSize.x > sSize.y) {
-            // It's lying horizontally on its structural X side, yaw it 90 degrees back into the Z track natively!
-            model.rotation.y = -Math.PI / 2;
-          }
-          model.updateMatrixWorld(true);
-
-          // 3) Final bounding pass to definitively lock its absolute structural offset statically to universal origin
-          const finalBbox = new THREE.Box3().setFromObject(model);
-          const center = new THREE.Vector3();
-          finalBbox.getCenter(center);
-
-          // Neutralize all bizarre custom Blender spatial coordinates securely mapping the body back dynamically
-          model.position.sub(center);
-          model.updateMatrixWorld(true);
-
-          // Re-measure absolute limits mapping into final state mathematically
-          const restingBbox = new THREE.Box3().setFromObject(model);
-          
-          model.traverse((child) => {
-            if (child.isMesh) {
-              child.castShadow = true;
-              child.receiveShadow = true;
-
-              const origMat = child.material;
-              this.solidState.push({
-                opacity: 1.0,
-                metalness: origMat.metalness !== undefined ? origMat.metalness : 0.8,
-                roughness: origMat.roughness !== undefined ? origMat.roughness : 0.2,
-              });
-
-              child.material = origMat.clone();
-              child.material.transparent = true;
-              child.material.opacity = 0; 
-              
-              this.materials.push(child.material);
-
-              if (child.geometry) {
-                const edgesGeo = new THREE.EdgesGeometry(child.geometry);
-                const wireframe = new THREE.LineSegments(edgesGeo, this.edgesMat);
-                child.add(wireframe);
-              }
-            }
-          });
-
-          this.group.add(model);
-          
-          // Natively glue the M1 SDF glow identically floating over the absolute highest vertex (Y-max)
-          this.glowMesh.position.y = restingBbox.max.y + 0.05;
-
-          resolve(model);
+          void this._ingestGltf(gltf, onProgress).then(resolve).catch(reject);
         },
         (xhr) => {
           if (onProgress && xhr.total > 0) {
-            onProgress(xhr.loaded / xhr.total);
+            onProgress(xhr.loaded / xhr.total * 0.48);
           }
         },
         (error) => {
@@ -121,6 +72,130 @@ export class DeviceFrame {
         }
       );
     });
+  }
+
+  /**
+   * Transform + materials must finish before the scroll timeline registers tweens.
+   * Edge outlines (EdgesGeometry) are the heaviest step — built afterward in `_deferEdgeLines`
+   * so the loading UI can reach 100% and the main thread can breathe.
+   */
+  async _ingestGltf(gltf, onProgress) {
+    const report = (t) => {
+      if (onProgress) onProgress(Math.min(1, t));
+    };
+
+    await nextFrame();
+    await idleYield();
+
+    const model = gltf.scene;
+    report(0.5);
+
+    const rawBbox = new THREE.Box3().setFromObject(model);
+    const rawSize = new THREE.Vector3();
+    rawBbox.getSize(rawSize);
+    await nextFrame();
+
+    const targetDepth = 5.36;
+    const maxDim = Math.max(rawSize.x, rawSize.y, rawSize.z);
+    const scaleFactor = maxDim > 0 ? targetDepth / maxDim : 1;
+    model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    model.updateMatrixWorld(true);
+    report(0.56);
+    await nextFrame();
+    await idleYield();
+
+    const sBbox = new THREE.Box3().setFromObject(model);
+    const sSize = new THREE.Vector3();
+    sBbox.getSize(sSize);
+
+    if (sSize.y > sSize.z && sSize.y > sSize.x) {
+      model.rotation.x = -Math.PI / 2;
+    } else if (sSize.x > sSize.z && sSize.x > sSize.y) {
+      model.rotation.y = -Math.PI / 2;
+    }
+    model.updateMatrixWorld(true);
+    report(0.6);
+    await nextFrame();
+
+    const finalBbox = new THREE.Box3().setFromObject(model);
+    const center = new THREE.Vector3();
+    finalBbox.getCenter(center);
+    model.position.sub(center);
+    model.updateMatrixWorld(true);
+    await nextFrame();
+    await idleYield();
+
+    const restingBbox = new THREE.Box3().setFromObject(model);
+    report(0.64);
+
+    const meshes = [];
+    model.traverse((child) => {
+      if (child.isMesh) meshes.push(child);
+    });
+
+    const n = meshes.length || 1;
+    for (let i = 0; i < meshes.length; i++) {
+      const child = meshes[i];
+      child.castShadow = true;
+      child.receiveShadow = true;
+
+      const origMat = child.material;
+      const mats = Array.isArray(origMat) ? origMat : [origMat];
+      const clonedMats = mats.map((m) => {
+        const c = m.clone();
+        c.transparent = true;
+        c.opacity = 0;
+        this.materials.push(c);
+        this.solidState.push({
+          opacity: 1.0,
+          metalness: m.metalness !== undefined ? m.metalness : 0.8,
+          roughness: m.roughness !== undefined ? m.roughness : 0.2,
+        });
+        return c;
+      });
+      child.material = clonedMats.length === 1 ? clonedMats[0] : clonedMats;
+
+      report(0.64 + 0.34 * ((i + 1) / n));
+      await nextFrame();
+      await idleYield();
+    }
+
+    this.group.add(model);
+    this.glowMesh.position.y = restingBbox.max.y + 0.05;
+    report(1);
+
+    void this._deferEdgeLines(meshes);
+
+    return model;
+  }
+
+  /**
+   * Crease-only outlines, one mesh per idle slice — does not block `load()`.
+   */
+  async _deferEdgeLines(meshes) {
+    const maxTrisForEdges = 12_000;
+    const edgeThresholdDeg = 38;
+
+    for (let i = 0; i < meshes.length; i++) {
+      const child = meshes[i];
+      const geo = child.geometry;
+      const tris = triangleCount(geo);
+      if (!geo || tris <= 0 || tris > maxTrisForEdges) {
+        await idleYield();
+        continue;
+      }
+
+      try {
+        const edgesGeo = new THREE.EdgesGeometry(geo, edgeThresholdDeg);
+        const wireframe = new THREE.LineSegments(edgesGeo, this.edgesMat);
+        child.add(wireframe);
+      } catch (e) {
+        console.warn('DeviceFrame: edge outline skipped', e);
+      }
+
+      await nextFrame();
+      await idleYield();
+    }
   }
 
   _createAppleGlow() {
