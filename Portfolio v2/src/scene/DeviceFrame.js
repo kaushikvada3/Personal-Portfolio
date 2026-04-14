@@ -17,14 +17,6 @@ function idleYield() {
   });
 }
 
-function triangleCount(geometry) {
-  if (!geometry) return 0;
-  const index = geometry.getIndex();
-  const pos = geometry.getAttribute('position');
-  if (index) return index.count / 3;
-  return (pos?.count ?? 0) / 3;
-}
-
 /**
  * iPhone-style device frame with Apple M1-style diffused chip glow.
  * 3-phase animation: x-ray → chip snap + glow → solidify
@@ -136,8 +128,9 @@ export class DeviceFrame {
     const n = meshes.length || 1;
     for (let i = 0; i < meshes.length; i++) {
       const child = meshes[i];
-      child.castShadow = true;
-      child.receiveShadow = true;
+      // High-poly GLB + shadows = GPU spikes; phone is lit by scene lights without casting.
+      child.castShadow = false;
+      child.receiveShadow = false;
 
       const origMat = child.material;
       const mats = Array.isArray(origMat) ? origMat : [origMat];
@@ -164,38 +157,15 @@ export class DeviceFrame {
     this.glowMesh.position.y = restingBbox.max.y + 0.05;
     report(1);
 
-    void this._deferEdgeLines(meshes);
+    // Edge outlines (EdgesGeometry) caused heavy GPU work on scroll; x-ray still reads without them.
+    void this._deferEdgeLines();
 
     return model;
   }
 
-  /**
-   * Crease-only outlines, one mesh per idle slice — does not block `load()`.
-   */
-  async _deferEdgeLines(meshes) {
-    const maxTrisForEdges = 12_000;
-    const edgeThresholdDeg = 38;
-
-    for (let i = 0; i < meshes.length; i++) {
-      const child = meshes[i];
-      const geo = child.geometry;
-      const tris = triangleCount(geo);
-      if (!geo || tris <= 0 || tris > maxTrisForEdges) {
-        await idleYield();
-        continue;
-      }
-
-      try {
-        const edgesGeo = new THREE.EdgesGeometry(geo, edgeThresholdDeg);
-        const wireframe = new THREE.LineSegments(edgesGeo, this.edgesMat);
-        child.add(wireframe);
-      } catch (e) {
-        console.warn('DeviceFrame: edge outline skipped', e);
-      }
-
-      await nextFrame();
-      await idleYield();
-    }
+  /** No-op: wireframe edges disabled for runtime performance. */
+  async _deferEdgeLines() {
+    await nextFrame();
   }
 
   _createAppleGlow() {
@@ -296,6 +266,34 @@ export class DeviceFrame {
   }
 
   show() { this.group.visible = true; }
+
+  setSolidState() {
+    this.materials.forEach((mat, i) => {
+      const solid = this.solidState[i] || { opacity: 1, metalness: 0.8, roughness: 0.2 };
+      mat.opacity = solid.opacity;
+      mat.metalness = solid.metalness;
+      mat.roughness = solid.roughness;
+      mat.transparent = false;
+    });
+    this.edgesMat.opacity = 0;
+  }
+
+  /**
+   * Precompile iPhone materials/states while loading screen is still visible.
+   * This removes first-entry hitches when scrolling into the phone section.
+   */
+  prewarm(renderOnce) {
+    if (typeof renderOnce !== 'function') return;
+
+    this.group.visible = true;
+    this.setXrayState();
+    renderOnce();
+
+    this.setSolidState();
+    renderOnce();
+
+    this.hide();
+  }
 
   hide() {
     this.group.visible = false;

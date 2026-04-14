@@ -2,8 +2,10 @@ import * as THREE from 'three';
 
 /**
  * Clean studio lighting with a shadow catcher under the package.
+ * @param {object} [gpuProfile] — from getGpuProfile(); controls shadow map resolution.
  */
-export function setupLighting(scene) {
+export function setupLighting(scene, gpuProfile) {
+  const shadowSize = gpuProfile?.shadowMapSize ?? 1024;
   const ambient = new THREE.AmbientLight(0xf5efe6, 0.18);
   scene.add(ambient);
 
@@ -13,7 +15,7 @@ export function setupLighting(scene) {
   const keyLight = new THREE.DirectionalLight(0xfff3e1, 3.1);
   keyLight.position.set(5.5, 8.5, 6.5);
   keyLight.castShadow = true;
-  keyLight.shadow.mapSize.set(2048, 2048);
+  keyLight.shadow.mapSize.set(shadowSize, shadowSize);
   keyLight.shadow.camera.near = 0.5;
   keyLight.shadow.camera.far = 32;
   keyLight.shadow.camera.left = -8;

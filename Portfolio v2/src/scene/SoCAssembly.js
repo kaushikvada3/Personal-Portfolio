@@ -35,15 +35,26 @@ const COL = {
 };
 
 export class SoCAssembly {
-  constructor(scene) {
+  /**
+   * @param {object} [gpuProfile] — from getGpuProfile(); lowers texture resolution & mesh detail on weak GPUs.
+   */
+  constructor(scene, gpuProfile = {}) {
     this.group = new THREE.Group();
     this.layers = [];
     this.dieMesh = null;
     this.ready = false;
+
+    const pt = gpuProfile.proceduralTextureSize ?? 512;
+    const ct = gpuProfile.ceramicTextureSize ?? 384;
+    this._ballSeg = gpuProfile.ballSegments ?? 12;
+    this._rb = gpuProfile.roundedSeg ?? 4;
+    this._deriveMapSize = gpuProfile.deriveMapSize ?? 768;
+    this._engraveSize = gpuProfile.engravingCanvas ?? 2048;
+
     this.surfaceMaps = {
-      brushedMetal: createBrushedMetalMaps({ size: 512, repeat: [1.2, 1.2] }),
-      substrate: createSubstrateMaps({ size: 512, repeat: [2.8, 2.8] }),
-      ceramic: createCeramicMaps({ size: 384, repeat: [1.8, 1.8] }),
+      brushedMetal: createBrushedMetalMaps({ size: pt, repeat: [1.2, 1.2] }),
+      substrate: createSubstrateMaps({ size: pt, repeat: [2.8, 2.8] }),
+      ceramic: createCeramicMaps({ size: ct, repeat: [1.8, 1.8] }),
     };
 
     if (USE_EXTERNAL_MODEL) {
@@ -110,20 +121,22 @@ export class SoCAssembly {
 
   _createEngravingTexture(label) {
     const canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 512;
+    const w = this._engraveSize ?? 2048;
+    canvas.width = w;
+    canvas.height = Math.round(w * 0.25);
 
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    const fontPx = Math.round(180 * (w / 2048));
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '600 180px Georgia, "Times New Roman", serif';
+    ctx.font = `600 ${fontPx}px Georgia, "Times New Roman", serif`;
 
     ctx.fillStyle = 'rgba(86, 92, 101, 0.88)';
     ctx.fillText(label, canvas.width * 0.5, canvas.height * 0.5 + 10);
 
-    ctx.lineWidth = 3;
+    ctx.lineWidth = Math.max(1, Math.round(3 * (w / 2048)));
     ctx.strokeStyle = 'rgba(215, 222, 232, 0.16)';
     ctx.strokeText(label, canvas.width * 0.5, canvas.height * 0.5 + 10);
 
@@ -141,7 +154,7 @@ export class SoCAssembly {
     const { brushedMetal } = this.surfaceMaps;
 
     // Slightly smoother spheres so the solder reads less faceted.
-    const ballGeo = new THREE.SphereGeometry(0.06, 12, 12);
+    const ballGeo = new THREE.SphereGeometry(0.06, this._ballSeg, this._ballSeg);
     const ballMat = new THREE.MeshPhysicalMaterial({
       color: 0xa6abb3,
       metalness: 1.0,
@@ -190,7 +203,7 @@ export class SoCAssembly {
     const { substrate, ceramic, brushedMetal } = this.surfaceMaps;
 
     // Main board — 1 draw call
-    const boardGeo = new RoundedBoxGeometry(4.5, 0.18, 4.5, 4, 0.08);
+    const boardGeo = new RoundedBoxGeometry(4.5, 0.18, 4.5, this._rb, 0.08);
     const boardMat = new THREE.MeshPhysicalMaterial({
       color: 0x343a33,
       metalness: 0.08,
@@ -291,7 +304,10 @@ export class SoCAssembly {
     const { ceramic, brushedMetal } = this.surfaceMaps;
 
     // ── Die base slab — 1 draw call
-    const baseGeo = new RoundedBoxGeometry(1.5, 0.06, 1.5, 3, 0.045);
+    const baseGeo = new RoundedBoxGeometry(
+      1.5, 0.06, 1.5,
+      Math.max(2, this._rb - 1),
+      0.045);
     const baseMat = new THREE.MeshPhysicalMaterial({
       color: 0x3d434a,
       metalness: 0.08,
@@ -329,7 +345,7 @@ export class SoCAssembly {
       floorMat.map = tex;
       floorMat.color.set(0x7a7f86);
 
-      const derivedMaps = deriveMapsFromImage(tex.image, { size: 768 });
+      const derivedMaps = deriveMapsFromImage(tex.image, { size: this._deriveMapSize });
       floorMat.roughnessMap = derivedMaps.roughnessMap;
       floorMat.normalMap = derivedMaps.normalMap;
       floorMat.normalScale = new THREE.Vector2(0.42, 0.42);
@@ -482,7 +498,7 @@ export class SoCAssembly {
     layer.userData.name = 'tim';
     const { ceramic } = this.surfaceMaps;
 
-    const timGeo = new RoundedBoxGeometry(1.6, 0.02, 1.6, 3, 0.025);
+    const timGeo = new RoundedBoxGeometry(1.6, 0.02, 1.6, 2, 0.025);
     const timMat = new THREE.MeshPhysicalMaterial({
       color: 0x2a2e33,
       metalness: 0.02,
@@ -507,7 +523,7 @@ export class SoCAssembly {
     layer.userData.name = 'ihs';
     const { brushedMetal } = this.surfaceMaps;
 
-    const lidGeo = new RoundedBoxGeometry(3.8, 0.25, 3.8, 4, 0.16);
+    const lidGeo = new RoundedBoxGeometry(3.8, 0.25, 3.8, this._rb, 0.16);
     const lidMat = new THREE.MeshPhysicalMaterial({
       color: 0xa5abb3,
       metalness: 1.0,

@@ -1,5 +1,6 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { getViewportFraming } from './viewportFraming';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -59,12 +60,14 @@ export const projConfig = {
  * Stage 4 (75–100%): Data routing reaches full intensity
  */
 export function createScrollTimeline({ camera, cameraTarget, assembly, dataTraces, chipTour, deviceFrame }) {
-  const lateralScale =
+    const lateralScale =
       window.innerWidth >= 1200 ? 1 :
       window.innerWidth >= 768 ? 0.72 :
       0.42;
 
-  const layers = assembly.getLayers();
+    const vf = getViewportFraming();
+
+    const layers = assembly.getLayers();
   
   function buildTimeline() {
     // Clean up previous GSAP instances if rebuilding
@@ -158,8 +161,8 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
       ease: 'power4.inOut' 
     }, 0);
 
-    // Subtle FOV shift
-    masterTl.fromTo(camera, { fov: 45 }, { fov: 42, duration: 28, ease: 'none',
+    // Subtle FOV shift (end value scales with viewport aspect)
+    masterTl.fromTo(camera, { fov: 45 }, { fov: vf.heroEndFov, duration: 28, ease: 'none',
       onUpdate: () => camera.updateProjectionMatrix(),
     }, 0);
 
@@ -219,9 +222,9 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
       ease: 'power4.inOut',
     }, 48);
 
-    // Tight telephoto FOV
+    // Tight telephoto FOV (responsive so die zoom is not claustrophobic on 16:10 etc.)
     masterTl.to(camera, {
-      fov: projConfig.fov,
+      fov: vf.projFov,
       duration: 11,
       ease: 'power4.inOut',
       onUpdate: () => camera.updateProjectionMatrix(),
@@ -330,21 +333,25 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
       ease: 'power2.out',
     }, 75);
 
-    // Camera sweeps to the user-tuned viewing angle
+    // Camera sweeps to contact / iPhone framing (FOV + Z scale with viewport aspect)
     masterTl.to(camera.position, {
-      x: -0.5, y: 12.5, z: 6.6,
+      x: vf.contactCam.x,
+      y: vf.contactCam.y,
+      z: vf.contactCam.z,
       duration: 18,
       ease: 'power4.inOut',
     }, 73);
 
     masterTl.to(cameraTarget, {
-      x: 0.50, y: 0.30, z: 0,
+      x: vf.contactTarget.x,
+      y: vf.contactTarget.y,
+      z: vf.contactTarget.z,
       duration: 18,
       ease: 'power4.inOut',
     }, 73);
 
     masterTl.to(camera, {
-      fov: 27,
+      fov: vf.contactFov,
       duration: 18,
       ease: 'power4.inOut',
       onUpdate: () => camera.updateProjectionMatrix(),
@@ -389,14 +396,6 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
         85
       );
 
-      // Subtle x-ray body opacity
-      deviceFrame.materials.forEach((mat) => {
-        masterTl.fromTo(mat,
-          { opacity: 0 },
-          { opacity: 0.06, duration: 4, ease: 'power2.out' },
-          85
-        );
-      });
 
       /* Phase 2 (88-89.2): Chip snaps straight DOWN onto the phone */
       // Landing position matches the phone position exactly so the chip sits right on the surface
@@ -420,20 +419,17 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
       );
 
       /* Phase 3 (90-96): Phone solidifies around the chip */
-      deviceFrame.materials.forEach((mat, i) => {
-        const solid = deviceFrame.solidState[i];
+      deviceFrame.materials.forEach((mat) => {
         masterTl.to(mat, {
-          opacity: solid.opacity,
-          metalness: solid.metalness,
-          roughness: solid.roughness,
-          duration: 6,
+          opacity: 1,
+          duration: 5,
           ease: 'power2.inOut',
-          onUpdate: () => {
-            // Once fully opaque, move to the opaque render pass to fix z-fighting
-            mat.transparent = mat.opacity < 0.99;
-          },
         }, 90);
       });
+
+      masterTl.call(() => {
+        deviceFrame.setSolidState();
+      }, [], 96.05);
 
       // Fade out edge wireframe as phone solidifies
       masterTl.to(deviceFrame.edgesMat, {
@@ -463,8 +459,16 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
     setTimeout(() => { ScrollTrigger.refresh(); }, 50);
   }
 
-  // Build the initial timeline
+  // Build the initial timeline (viewport FOV/camera baked from current window size)
   buildTimeline();
+
+  let resizeDebounce;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeDebounce);
+    resizeDebounce = setTimeout(() => {
+      ScrollTrigger.refresh(true);
+    }, 120);
+  });
 
   return masterTl;
 }

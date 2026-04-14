@@ -9,17 +9,19 @@ import { setupPortfolioMotion } from './portfolioMotion';
 import { createScrollTimeline } from './scroll/ScrollTimeline';
 import { createDebugGUI }       from './debugGUI';
 import { WaferLoader }         from './ui/WaferLoader';
+import { getGpuProfile }       from './utils/gpuProfile';
 
 /* ── Initialise Three.js ───────────────────────── */
 const canvas       = document.getElementById('webgl-canvas');
-const sceneManager = new SceneManager(canvas);
+const gpuProfile   = getGpuProfile();
+const sceneManager = new SceneManager(canvas, gpuProfile);
 const { scene, camera, cameraTarget } = sceneManager;
 
 /* ── Lighting ──────────────────────────────────── */
-setupLighting(scene);
+setupLighting(scene, gpuProfile);
 
 /* ── SoC Assembly ──────────────────────────────── */
-const assembly = new SoCAssembly(scene);
+const assembly = new SoCAssembly(scene, gpuProfile);
 
 /* ── Data Traces (signals along model traces) ──── */
 const dataTraces = new DataTraces(scene, assembly);
@@ -53,7 +55,11 @@ function animate() {
   chipTour.update(camera);
 }
 
-animate();
+function startAnimationLoop() {
+  if (startAnimationLoop.started) return;
+  startAnimationLoop.started = true;
+  animate();
+}
 
 /* ── Asynchronous Initialization Bootloader ──────── */
 async function init() {
@@ -87,6 +93,10 @@ async function init() {
 
   loadingScreen?.classList.add('loading-screen--exiting');
 
+  // Warm up shaders and iPhone states while loading screen is still visible.
+  sceneManager.warmup();
+  deviceFrame?.prewarm(() => sceneManager.render(0, 0));
+
   createScrollTimeline({ camera, cameraTarget, assembly, dataTraces, chipTour, deviceFrame });
   setupPortfolioMotion();
 
@@ -97,7 +107,10 @@ async function init() {
       waferLoader?.destroy();
       loadingScreen.remove();
       document.body.classList.remove('loading');
+      startAnimationLoop();
     }, 800);
+  } else {
+    startAnimationLoop();
   }
 
   // createDebugGUI({ camera, cameraTarget, assembly, deviceFrame });
