@@ -1,6 +1,5 @@
-# GitHub Pages serves ONLY the Vite production build from Portfolio v2/docs
-# (not the repo root, not Portfolio v3). Build output path is fixed in the job below.
-name: Deploy Portfolio v2 to GitHub Pages
+# Deploys Portfolio Cinema (Portfolio.html + graph-fly.js + graph.json) to GitHub Pages.
+name: Deploy Portfolio to GitHub Pages
 
 on:
   push:
@@ -8,7 +7,9 @@ on:
       - main
       - eda-tool-theme
     paths:
-      - 'Portfolio v2/**'
+      - 'Portfolio.html'
+      - 'graph-fly.js'
+      - 'graph.json'
       - '.github/workflows/deploy-portfolio-v2.yml'
   workflow_dispatch:
 
@@ -32,25 +33,17 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: Portfolio v2/package-lock.json
-
-      - name: Install dependencies
-        working-directory: Portfolio v2
-        run: npm ci
-
-      - name: Build Vite site
-        working-directory: Portfolio v2
-        run: npm run build
+      - name: Prepare static site
+        run: |
+          mkdir -p _site
+          cp Portfolio.html _site/index.html
+          cp graph-fly.js _site/graph-fly.js
+          cp graph.json _site/graph.json
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: Portfolio v2/docs
+          path: _site
 
   deploy:
     needs: build

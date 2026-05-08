@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kaushik Vada — Cinema</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Inter:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #08080B;
+    --bg-elev: #0E0E13;
+    --ink: #F5F2EB;
+    --ink-soft: rgba(245, 242, 235, 0.62);
+    --ink-quiet: rgba(245, 242, 235, 0.32);
+    --rule: rgba(245, 242, 235, 0.08);
+    --glass-edge: rgba(255, 255, 255, 0.08);
+    --halo-1: #6E5CFF;
+    --halo-2: #FF6B9D;
+    --halo-3: #FFC75A;
+    --serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+    --sans: "Inter", -apple-system, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    font-weight: 300;
+  }
+  ::selection { background: var(--halo-1); color: var(--ink); }
+
+  /* Obsidian-vault graph — ambient background */
+  #graph-bg {
+    position: fixed; inset: 0;
+    width: 100vw; height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    /* No mask — we want immersion edge-to-edge */
+  }
+  /* Make sure all real content sits above the canvas */
+  .nav, main, footer, .hero, section { position: relative; z-index: 2; }
+
+  /* Film grain — subtle */
+  body::after {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 3px 3px;
+    mix-blend-mode: overlay;
+    opacity: 0.7;
+    z-index: 100;
+  }
+
+  /* Sticky chrome */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 22px 40px;
+    z-index: 50;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    background: rgba(8,8,11,0.5);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav .mark { color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .nav .mark::before {
+    content: ""; width: 6px; height: 6px; background: #44FF99; border-radius: 50%;
+    box-shadow: 0 0 8px #44FF99;
+  }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a { color: var(--ink-soft); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--ink); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 120px 40px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-orb {
+    display: none;
+  }
+  .hero-orb-OLD {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 90vh; height: 90vh; max-width: 1100px; max-height: 1100px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 30% 30%, var(--halo-3) 0%, transparent 38%),
+      radial-gradient(circle at 70% 35%, var(--halo-1) 0%, transparent 42%),
+      radial-gradient(circle at 50% 75%, var(--halo-2) 0%, transparent 44%);
+    filter: blur(80px) saturate(115%);
+    opacity: 0.55;
+    animation: breathe 14s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes breathe {
+    0%,100% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.08) rotate(45deg); opacity: 0.62; }
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 80px 80px;
+    pointer-events: none;
+  }
+  .hero-inner {
+    position: relative;
+    max-width: 1320px; margin: 0 auto; width: 100%;
+  }
+  .hero-pre {
+    display: flex; align-items: center; gap: 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 36px;
+    opacity: 0; animation: rise 1.2s ease-out 0.2s forwards;
+  }
+  .hero-pre::before { content: ""; width: 36px; height: 1px; background: var(--ink-soft); }
+
+  .hero-name {
+    font-family: var(--serif);
+    font-weight: 200;
+    font-size: clamp(82px, 17vw, 260px);
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    margin: 0;
+  }
+  .hero-name .l1, .hero-name .l2 {
+    display: block;
+    opacity: 0;
+    transform: translateY(40px);
+    animation: rise 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .hero-name .l1 { animation-delay: 0.4s; }
+  .hero-name .l2 { animation-delay: 0.65s; font-style: italic; font-weight: 300; color: var(--halo-3); }
+  @keyframes rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero-name .ampm {
+    display: inline-block;
+    font-style: italic; font-weight: 300; color: var(--halo-1);
+    transform: translateX(-12px);
+  }
+
+  .hero-foot {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 60px;
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--rule);
+    align-items: end;
+    opacity: 0; animation: rise 1.4s ease-out 1s forwards;
+  }
+  .hero-tag {
+    font-family: var(--serif);
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--ink);
+    max-width: 38ch;
+    text-wrap: pretty;
+  }
+  .hero-tag em { font-style: italic; color: var(--halo-3); }
+  .hero-loc {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+  .hero-loc strong { color: var(--ink); display: block; font-weight: 500; font-size: 13px; margin-bottom: 4px; letter-spacing: 0.1em; }
+  .hero-cta {
+    display: flex; gap: 14px; justify-self: end;
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .hero-cta a {
+    color: var(--ink); text-decoration: none;
+    padding: 14px 22px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.02);
+    backdrop-filter: blur(8px);
+    transition: all 0.25s ease;
+  }
+  .hero-cta a:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .hero-cta a.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .hero-cta a.primary:hover { background: transparent; color: var(--ink); }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 32px; left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-quiet);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .scroll-cue::after {
+    content: "";
+    width: 1px; height: 28px;
+    background: linear-gradient(to bottom, var(--ink-quiet), transparent);
+    animation: scroll-pulse 2s ease-in-out infinite;
+  }
+  @keyframes scroll-pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+  /* SECTION FRAMING */
+  .section {
+    padding: 140px 40px;
+    max-width: 1320px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .sec-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    margin-bottom: 80px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .sec-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--halo-1);
+    margin-bottom: 16px;
+  }
+  .sec-title {
+    font-family: var(--serif);
+    font-weight: 200;
+    font-size: clamp(40px, 5.5vw, 76px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .sec-title em { font-style: italic; color: var(--halo-3); }
+  .sec-count { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: 0.1em; }
+
+  /* GLASS CARD */
+  .glass {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid var(--glass-edge);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    position: relative;
+  }
+  .glass::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 30%);
+    pointer-events: none;
+  }
+
+  /* ABOUT */
+  .about {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+  .about-quote {
+    font-family: var(--serif);
+    font-weight: 200;
+    font-size: clamp(28px, 3.2vw, 44px);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    text-wrap: pretty;
+  }
+  .about-quote em { font-style: italic; color: var(--halo-3); }
+  .about-quote .quiet { color: var(--ink-soft); }
+  .about-meta {
+    padding: 32px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .about-meta-row {
+    display: flex; justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .about-meta-row:last-child { border-bottom: none; }
+  .about-meta-row .k { color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; }
+  .about-meta-row .v { color: var(--ink); }
+
+  /* EXPERIENCE — vertical timeline of glass plates */
+  .exp-list { display: flex; flex-direction: column; gap: 14px; }
+  .exp-item {
+    display: grid;
+    grid-template-columns: 140px 1fr auto;
+    gap: 40px;
+    padding: 32px 36px;
+    align-items: center;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
+  }
+  .exp-item:hover { transform: translateX(8px); border-color: rgba(255,255,255,0.18); }
+  .exp-item:hover .exp-arrow { transform: translateX(8px); color: var(--halo-3); }
+  .exp-yr { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); letter-spacing: 0.08em; }
+  .exp-co {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: -0.015em;
+    line-height: 1;
+  }
+  .exp-co em { font-style: italic; color: var(--halo-3); font-weight: 400; }
+  .exp-role { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: 0.1em; margin-top: 8px; text-transform: uppercase; }
+  .exp-arrow {
+    font-size: 22px; color: var(--ink-soft);
+    transition: transform 0.3s ease, color 0.3s ease;
+  }
+
+  /* PROJECTS — large cinematic cards */
+  .proj-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .proj {
+    aspect-ratio: 4/3.4;
+    padding: 36px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.35s ease;
+  }
+  .proj:hover { transform: translateY(-6px); }
+  .proj:hover .proj-art { transform: scale(1.04); }
+  .proj.span-2 { grid-column: span 2; aspect-ratio: 21/9; }
+  .proj-art {
+    position: absolute; inset: 0;
+    transition: transform 0.6s ease;
+    pointer-events: none;
+  }
+  .proj > .proj-top, .proj > .proj-bottom { position: relative; z-index: 2; }
+  .proj-top {
+    display: flex; justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .proj-bottom { max-width: 90%; }
+  .proj-name {
+    font-family: var(--serif);
+    font-size: clamp(28px, 3.2vw, 44px);
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+    text-wrap: pretty;
+  }
+  .proj-name em { font-style: italic; color: var(--halo-3); }
+  .proj-desc { font-size: 14px; color: var(--ink-soft); line-height: 1.5; max-width: 50ch; }
+
+  /* Project art SVGs */
+  .art-1 { background: radial-gradient(circle at 30% 60%, rgba(110,92,255,0.25), transparent 60%), radial-gradient(circle at 80% 30%, rgba(255,107,157,0.15), transparent 50%); }
+  .art-2 { background: radial-gradient(circle at 60% 40%, rgba(255,199,90,0.2), transparent 55%), radial-gradient(circle at 20% 80%, rgba(110,92,255,0.18), transparent 60%); }
+  .art-3 { background: radial-gradient(circle at 50% 50%, rgba(110,92,255,0.3), rgba(255,107,157,0.2) 30%, transparent 65%); }
+  .art-4 { background: radial-gradient(circle at 80% 70%, rgba(255,199,90,0.22), transparent 55%); }
+
+  /* SKILLS */
+  .skills {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .skill-card { padding: 32px; }
+  .skill-cat {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--halo-1);
+    margin-bottom: 22px;
+  }
+  .skill-list { list-style: none; }
+  .skill-list li {
+    font-family: var(--serif);
+    font-size: 18px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rule);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .skill-list li:last-child { border-bottom: none; }
+  .skill-list .lvl { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); letter-spacing: 0.08em; }
+
+  /* WRITING */
+  .writing { display: flex; flex-direction: column; }
+  .write-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 32px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: center;
+    cursor: pointer;
+    transition: padding 0.25s ease;
+  }
+  .write-row:first-child { border-top: 1px solid var(--rule); }
+  .write-row:hover { padding-left: 16px; }
+  .write-row:hover .write-title { color: var(--halo-3); }
+  .write-num { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: 0.1em; }
+  .write-title {
+    font-family: var(--serif);
+    font-size: 26px;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    transition: color 0.25s;
+  }
+  .write-meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); letter-spacing: 0.12em; }
+
+  /* CONTACT — full bleed cinematic moment */
+  .contact {
+    padding: 160px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .contact-orb {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80vh; height: 80vh; max-width: 800px; max-height: 800px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, var(--halo-1) 0%, transparent 50%),
+      radial-gradient(circle at 30% 70%, var(--halo-2) 0%, transparent 50%);
+    filter: blur(90px);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .contact-headline {
+    font-family: var(--serif);
+    font-weight: 200;
+    font-size: clamp(60px, 9vw, 156px);
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    position: relative;
+    z-index: 2;
+  }
+  .contact-headline em { font-style: italic; color: var(--halo-3); }
+  .contact-cta {
+    margin-top: 56px;
+    display: inline-flex;
+    align-items: center; gap: 14px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 28px;
+    color: var(--ink);
+    text-decoration: none;
+    padding: 22px 36px;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--bg);
+    transition: all 0.25s ease;
+    position: relative;
+    z-index: 2;
+  }
+  .contact-cta:hover { background: transparent; color: var(--ink); }
+  .contact-foot {
+    margin-top: 80px;
+    display: flex; justify-content: center; gap: 36px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    position: relative; z-index: 2;
+  }
+  .contact-foot a { color: var(--ink-soft); text-decoration: none; transition: color 0.25s; }
+  .contact-foot a:hover { color: var(--ink); }
+
+  footer {
+    padding: 32px 40px;
+    display: flex; justify-content: space-between;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-quiet);
+  }
+
+  @media (max-width: 880px) {
+    .nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    .hero { padding: 100px 20px 60px; }
+    .hero-foot { grid-template-columns: 1fr; gap: 28px; text-align: left; }
+    .hero-cta { justify-self: start; }
+    .section { padding: 100px 20px; }
+    .about, .skills, .proj-grid { grid-template-columns: 1fr; gap: 24px; }
+    .proj.span-2 { grid-column: auto; aspect-ratio: 4/3; }
+    .exp-item { grid-template-columns: 1fr; gap: 12px; padding: 22px; }
+    .write-row { grid-template-columns: 1fr; gap: 6px; padding: 16px 0; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="graph-bg" aria-hidden="true"></canvas>
+
+<nav class="nav">
+  <div class="mark">KV — silicon engineer</div>
+  <div class="nav-links">
+    <a href="#about">about</a>
+    <a href="#exp">work</a>
+    <a href="#projects">projects</a>
+    <a href="#skills">skills</a>
+    <a href="#contact">contact</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-orb"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-pre">portfolio · vol. ii · 2026 edition</div>
+    <h1 class="hero-name">
+      <span class="l1">Kaushik</span>
+      <span class="l2">Vada</span>
+    </h1>
+    <div class="hero-foot">
+      <p class="hero-tag">RTL &amp; VLSI engineer — turning specifications into <em>silicon</em>, from <em>microarchitecture</em> through tapeout.</p>
+      <div class="hero-loc">
+        <strong>32.72°N · 117.16°W</strong>
+        San Diego, CA · open to relocate
+      </div>
+      <div class="hero-cta">
+        <a href="#projects" class="primary">view work</a>
+        <a href="#contact">say hello</a>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-cue">scroll</div>
+</section>
+
+<!-- ABOUT -->
+<section class="section" id="about">
+  <header class="sec-head">
+    <div>
+      <div class="sec-eyebrow">01 · about</div>
+      <h2 class="sec-title">A few <em>true</em> things.</h2>
+    </div>
+    <div class="sec-count">004 paragraphs</div>
+  </header>
+  <div class="about">
+    <p class="about-quote">
+      I work at the boundary of physics and abstraction — RTL design, verification, and the full <em>RTL-to-GDSII</em> flow — with the same instinct: <em>keep the model honest.</em>
+      <span class="quiet">Currently architecting a 2D graphics accelerator for academic tapeout, refining timing constraints in Synopsys DC, and authoring a two-level cache hierarchy from first principles.</span>
+    </p>
+    <div class="about-meta glass">
+      <div class="about-meta-row"><span class="k">Next</span><span class="v">ARM — implementation eng. intern</span></div>
+      <div class="about-meta-row"><span class="k">Now</span><span class="v">VSCLab — undergrad researcher</span></div>
+      <div class="about-meta-row"><span class="k">Studying</span><span class="v">UCR · BS EE · 3.93 GPA</span></div>
+      <div class="about-meta-row"><span class="k">Honors</span><span class="v">UC Regents Distinguished Scholar</span></div>
+      <div class="about-meta-row"><span class="k">Graduating</span><span class="v">December 2026</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section class="section" id="exp">
+  <header class="sec-head">
+    <div>
+      <div class="sec-eyebrow">02 · operating history</div>
+      <h2 class="sec-title">Where I've <em>shipped</em>.</h2>
+    </div>
+    <div class="sec-count">003 records</div>
+  </header>
+  <div class="exp-list">
+    <div class="exp-item glass">
+      <span class="exp-yr">2026 — incoming</span>
+      <div>
+        <h3 class="exp-co">ARM<em>.</em></h3>
+        <p class="exp-role">implementation engineer intern · san diego · synthesis · place &amp; route · sta</p>
+      </div>
+      <span class="exp-arrow">→</span>
+    </div>
+    <div class="exp-item glass">
+      <span class="exp-yr">2025 — present</span>
+      <div>
+        <h3 class="exp-co">UCR <em>/</em> VSCLab</h3>
+        <p class="exp-role">undergraduate researcher · custom risc-v · sdc constraints · synopsys dc</p>
+      </div>
+      <span class="exp-arrow">→</span>
+    </div>
+    <div class="exp-item glass">
+      <span class="exp-yr">summer 2025</span>
+      <div>
+        <h3 class="exp-co">Digital Force <em>Technologies</em></h3>
+        <p class="exp-role">hardware design intern · san diego · risc-v fpga · ifu/idu/alu rtl</p>
+      </div>
+      <span class="exp-arrow">→</span>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section class="section" id="projects">
+  <header class="sec-head">
+    <div>
+      <div class="sec-eyebrow">03 · selected work</div>
+      <h2 class="sec-title">Things I'm <em>proud</em> of.</h2>
+    </div>
+    <div class="sec-count">002 in-flight</div>
+  </header>
+  <div class="proj-grid">
+    <article class="proj glass span-2">
+      <div class="proj-art art-3"></div>
+      <div class="proj-top">
+        <span>2025 — present · rtl → gdsii</span>
+        <span>open ↗</span>
+      </div>
+      <div class="proj-bottom">
+        <h3 class="proj-name">Project <em>Obsidian</em> — a 2D graphics accelerator, all the way to silicon.</h3>
+        <p class="proj-desc">A specialized Blitter that offloads pixel-copy from a custom Fantasy Console host CPU. Memory-mapped APB slave, on-chip SRAM, dedicated compute engine, VGA scanner. Driven through synthesis, place-and-route, and timing closure on the Synopsys toolchain — targeting clean DRC/LVS sign-off and an academic tapeout.</p>
+      </div>
+    </article>
+
+    <article class="proj glass span-2">
+      <div class="proj-art art-1"></div>
+      <div class="proj-top">
+        <span>2025 — present · verilog · vcs</span>
+        <span>open ↗</span>
+      </div>
+      <div class="proj-bottom">
+        <h3 class="proj-name">A two-level <em>cache</em>, parameterized end-to-end.</h3>
+        <p class="proj-desc">Configurable L1–L2 RTL: parametric sets / ways / line size, LRU replacement, write-back / write-allocate. Tag, data, and valid structures with a simple memory model emulating main-memory latency. Validated in Synopsys VCS against crafted access traces, with hit/miss counters and Verdi waveforms confirming LRU and write policy across configurations.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section class="section" id="skills">
+  <header class="sec-head">
+    <div>
+      <div class="sec-eyebrow">04 · tooling</div>
+      <h2 class="sec-title">Instruments at <em>hand</em>.</h2>
+    </div>
+    <div class="sec-count">five categories</div>
+  </header>
+  <div class="skills">
+    <div class="skill-card glass">
+      <div class="skill-cat">A · HDL</div>
+      <ul class="skill-list">
+        <li><span>Verilog</span><span class="lvl">primary</span></li>
+        <li><span>RTL design</span><span class="lvl">primary</span></li>
+        <li><span>SDC constraints</span><span class="lvl">working</span></li>
+      </ul>
+    </div>
+    <div class="skill-card glass">
+      <div class="skill-cat">B · EDA / backend</div>
+      <ul class="skill-list">
+        <li><span>Synopsys Design Compiler</span><span class="lvl">working</span></li>
+        <li><span>Synopsys Fusion Compiler</span><span class="lvl">working</span></li>
+        <li><span>Synopsys VCS</span><span class="lvl">working</span></li>
+        <li><span>Static timing analysis</span><span class="lvl">working</span></li>
+      </ul>
+    </div>
+    <div class="skill-card glass">
+      <div class="skill-cat">C · FPGA</div>
+      <ul class="skill-list">
+        <li><span>Xilinx Vivado</span><span class="lvl">working</span></li>
+        <li><span>Verdi waveform</span><span class="lvl">working</span></li>
+      </ul>
+    </div>
+    <div class="skill-card glass">
+      <div class="skill-cat">D · architecture</div>
+      <ul class="skill-list">
+        <li><span>RISC-V</span><span class="lvl">primary</span></li>
+        <li><span>Pipelining</span><span class="lvl">primary</span></li>
+        <li><span>Caches</span><span class="lvl">primary</span></li>
+        <li><span>Computer architecture</span><span class="lvl">primary</span></li>
+      </ul>
+    </div>
+    <div class="skill-card glass">
+      <div class="skill-cat">E · protocols &amp; software</div>
+      <ul class="skill-list">
+        <li><span>APB · UART</span><span class="lvl">working</span></li>
+        <li><span>Valid / Ready</span><span class="lvl">working</span></li>
+        <li><span>C / C++</span><span class="lvl">primary</span></li>
+        <li><span>Python</span><span class="lvl">primary</span></li>
+        <li><span>Unix / Linux</span><span class="lvl">primary</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="contact-orb"></div>
+  <h2 class="contact-headline">Let's <em>talk</em>.</h2>
+  <a href="mailto:kaushikvada3@gmail.com" class="contact-cta">kaushikvada3@gmail.com →</a>
+  <div class="contact-foot">
+    <a href="https://github.com/kaushikvada" target="_blank" rel="noopener">github / kaushikvada</a>
+    <a href="https://linkedin.com/in/kaushikv198" target="_blank" rel="noopener">linkedin / kaushikv198</a>
+    <a href="tel:8583058647">☎ 858 · 305 · 8647</a>
+  </div>
+</section>
+
+<footer>
+  <span>Set in Newsreader &amp; Inter · 2026</span>
+  <span>© KV · all rights · all wrongs reversible</span>
+</footer>
+<script src="graph-fly.js"></script>
+</body>
+</html>
