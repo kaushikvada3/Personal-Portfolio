@@ -106,6 +106,16 @@
     links.push([a, b]);
   }
 
+  // ─── Die layout (used by tapeout easter egg) ──────────────────
+  // Sort by group → degree so same-group cells are adjacent and
+  // hubs sit at the start of each group's row block.
+  const dieOrder = [...nodes].sort((a, b) =>
+    a.group !== b.group ? a.group - b.group : b.deg - a.deg
+  );
+  const COLS = 16;
+  dieOrder.forEach((n, i) => { n.gridCol = i % COLS; n.gridRow = Math.floor(i / COLS); });
+  const NUM_ROWS = Math.ceil(nodes.length / COLS);
+
   // Mouse parallax — gentle camera tilt as the cursor moves
   const mouse = { nx: 0, ny: 0 };
   window.addEventListener('mousemove', (e) => {
@@ -121,7 +131,7 @@
   let rtlProgress = 0, rtlTarget = 0;
   // tapeout: 0=idle 1=collapsing 2=hold 3=expanding
   let tapeoutPhase = 0, tapeoutCollapse = 0, tapeoutT0 = 0;
-  const TAPEOUT_IN = 1400, TAPEOUT_HOLD = 1000, TAPEOUT_OUT = 1400;
+  const TAPEOUT_IN = 1500, TAPEOUT_HOLD = 2200, TAPEOUT_OUT = 1400;
 
   let keyBuf = '';
   window.addEventListener('keydown', e => {
@@ -136,6 +146,20 @@
       tapeoutPhase = 1;
       tapeoutT0 = performance.now();
     }
+  });
+
+  // Programmatic triggers (used by tests and for fun in dev console)
+  window.__triggerTapeout = () => {
+    if (tapeoutPhase === 0) { tapeoutPhase = 1; tapeoutT0 = performance.now(); }
+  };
+  window.__triggerRTL = (ms = 2600) => {
+    rtlTarget = 1;
+    setTimeout(() => { rtlTarget = 0; }, ms);
+  };
+  window.__getEggState = () => ({
+    tapeoutPhase, tapeoutCollapse, rtlProgress, rtlTarget,
+    nodes: nodes.length, COLS, NUM_ROWS,
+    sample0: nodes[0] ? { x: nodes[0].x, y: nodes[0].y, gridCol: nodes[0].gridCol, gridRow: nodes[0].gridRow } : null,
   });
 
   function project(x, y, z) {
@@ -197,15 +221,42 @@
     camX += (targetCamX - camX) * 0.04;
     camY += (targetCamY - camY) * 0.04;
 
-    // Pre-project all nodes once (tapeout squeezes xy toward 0)
-    const squeeze = 1 - tapeoutCollapse;
+    // ── Die grid geometry (used during tapeout) ─────────────
+    const dieW = Math.min(W * 0.62, 760);
+    const dieH = Math.min(H * 0.66, 520);
+    const dieX = (W - dieW) / 2;
+    const dieY = (H - dieH) / 2;
+    const innerPad = 0.085;
+    const innerLeft = dieX + dieW * innerPad;
+    const innerTop  = dieY + dieH * innerPad;
+    const cellW = (dieW * (1 - 2 * innerPad)) / COLS;
+    const cellH = (dieH * (1 - 2 * innerPad)) / NUM_ROWS;
+
+    // Pre-project all nodes; during tapeout, lerp toward die cell.
+    const c = tapeoutCollapse;
+    const wobScale = 1 - c;
     const proj = new Array(nodes.length);
     for (let i = 0; i < nodes.length; i++) {
       const n = nodes[i];
-      const wob = 8 * squeeze;
-      const xx = (n.x + Math.cos(t * 0.0004 + n.phase) * wob) * squeeze;
-      const yy = (n.y + Math.sin(t * 0.0005 + n.phase * 1.3) * wob) * squeeze;
-      proj[i] = project(xx, yy, n.z);
+      const wob = 8 * wobScale;
+      const xx = n.x + Math.cos(t * 0.0004 + n.phase) * wob;
+      const yy = n.y + Math.sin(t * 0.0005 + n.phase * 1.3) * wob;
+      let p = project(xx, yy, n.z);
+      if (c > 0) {
+        const tx = innerLeft + n.gridCol * cellW + cellW * 0.5;
+        const ty = innerTop  + n.gridRow * cellH + cellH * 0.5;
+        // Stagger arrival per node so cells "drop in" rather than warp uniformly
+        const stagger = 0.0008 * ((n.gridRow * COLS + n.gridCol) - 120);
+        const cn = Math.max(0, Math.min(1, c + stagger));
+        if (!p) p = { sx: tx, sy: ty, scale: 0.6, depth: 1500 };
+        const ease = cn * cn * (3 - 2 * cn);
+        p.sx = p.sx * (1 - ease) + tx * ease;
+        p.sy = p.sy * (1 - ease) + ty * ease;
+        p.cellEase = ease;
+      } else {
+        if (p) p.cellEase = 0;
+      }
+      proj[i] = p;
     }
 
     // ── Draw edges (back to front would be ideal; for ambient
@@ -219,25 +270,36 @@
     }
     drawableLinks.sort((a, b) => b.d - a.d);
 
+    // ── Pre-cells: draw silicon substrate inside the die so cells contrast ──
+    if (c > 0.05) {
+      const oa = Math.min(1, (c - 0.05) / 0.4);
+      ctx.fillStyle = `rgba(20,18,14,${oa * 0.6})`;
+      ctx.fillRect(dieX, dieY, dieW, dieH);
+    }
+
+    // Tapeout also forces Manhattan routing once cells have settled
+    const tapeManhattan = c < 0.4 ? 0 : Math.min(1, (c - 0.4) / 0.5);
+    const manhattan = Math.max(rtlProgress, tapeManhattan);
+    // During tapeout, fade edges so they read as light routing, not chaos
+    const edgeFade = c < 0.5 ? 1 : Math.max(0.35, 1 - (c - 0.5) * 0.9);
+
     for (const e of drawableLinks) {
-      const fa = fogAlpha(e.pa.depth);
-      const fb = fogAlpha(e.pb.depth);
-      const a = Math.min(fa, fb) * 0.35;
+      const fa = Math.max(fogAlpha(e.pa.depth), (e.pa.cellEase || 0) * 0.85);
+      const fb = Math.max(fogAlpha(e.pb.depth), (e.pb.cellEase || 0) * 0.85);
+      const a = Math.min(fa, fb) * 0.35 * edgeFade;
       if (a < 0.01) continue;
-      // RTL mode: edges snap to copper colour during Manhattan re-route
-      const edgeR = Math.round(180 + rtlProgress * 55);
-      const edgeG = Math.round(170 - rtlProgress * 100);
-      const edgeB = Math.round(230 - rtlProgress * 170);
+      const edgeR = Math.round(180 + manhattan * 55);
+      const edgeG = Math.round(170 - manhattan * 100);
+      const edgeB = Math.round(230 - manhattan * 170);
       ctx.strokeStyle = `rgba(${edgeR},${edgeG},${edgeB},${a})`;
       ctx.lineWidth = Math.max(0.4, 0.9 * Math.min(e.pa.scale, e.pb.scale));
       ctx.beginPath();
       ctx.moveTo(e.pa.sx, e.pa.sy);
-      if (rtlProgress > 0.01) {
-        // Blend corner from midpoint (straight) → Manhattan elbow
+      if (manhattan > 0.01) {
         const mx = (e.pa.sx + e.pb.sx) * 0.5;
         const my = (e.pa.sy + e.pb.sy) * 0.5;
-        const cx = mx + (e.pb.sx - mx) * rtlProgress;
-        const cy = my + (e.pa.sy - my) * rtlProgress;
+        const cx = mx + (e.pb.sx - mx) * manhattan;
+        const cy = my + (e.pa.sy - my) * manhattan;
         ctx.lineTo(cx, cy);
       }
       ctx.lineTo(e.pb.sx, e.pb.sy);
@@ -252,30 +314,53 @@
     for (const i of order) {
       const n = nodes[i];
       const p = proj[i];
-      const a = fogAlpha(p.depth);
+      const ce = p.cellEase || 0;
+      // During tapeout, every cell must be visible regardless of 3D fog
+      const a = Math.max(fogAlpha(p.depth), ce * 0.95);
       if (a < 0.02) continue;
-      const r = Math.max(0.4, n.r3d * p.scale);
+      const r = Math.max(0.4, n.r3d * Math.max(p.scale, ce * 0.6));
 
-      // halo (modest — we don't want bokeh)
-      const halo = r * (2 + 1.5 * a);
-      const grad = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, halo);
-      grad.addColorStop(0, n.color + Math.round(a * 70).toString(16).padStart(2, '0'));
-      grad.addColorStop(0.6, n.color + Math.round(a * 18).toString(16).padStart(2, '0'));
-      grad.addColorStop(1, n.color + '00');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(p.sx, p.sy, halo, 0, Math.PI * 2);
-      ctx.fill();
+      // Halo fades out as cells settle into the die grid
+      const haloMult = (1 - ce);
+      if (haloMult > 0.04) {
+        const halo = r * (2 + 1.5 * a);
+        const grad = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, halo);
+        const haloA = a * haloMult;
+        grad.addColorStop(0, n.color + Math.round(haloA * 70).toString(16).padStart(2, '0'));
+        grad.addColorStop(0.6, n.color + Math.round(haloA * 18).toString(16).padStart(2, '0'));
+        grad.addColorStop(1, n.color + '00');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(p.sx, p.sy, halo, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-      // hard core
-      ctx.fillStyle = n.color + Math.round(a * 235).toString(16).padStart(2, '0');
-      ctx.beginPath();
-      ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
-      ctx.fill();
+      // Core: lerp circle → filled standard-cell rect
+      const coreA = ce > 0.6 ? Math.min(1, a * 1.2) : a;
+      ctx.fillStyle = n.color + Math.round(coreA * 235).toString(16).padStart(2, '0');
+      if (ce < 0.55) {
+        ctx.beginPath();
+        ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Scale from circle silhouette to crisp cell rect
+        const t01 = (ce - 0.55) / 0.45;
+        const targetW = cellW * 0.86;
+        const targetH = cellH * 0.78;
+        const rectW = (r * 1.6) * (1 - t01) + targetW * t01;
+        const rectH = (r * 1.6) * (1 - t01) + targetH * t01;
+        ctx.fillRect(p.sx - rectW / 2, p.sy - rectH / 2, rectW, rectH);
+        // Crisp cell border (brighter at full collapse)
+        if (t01 > 0.4) {
+          ctx.strokeStyle = `rgba(255,255,255,${(t01 - 0.4) * 0.55})`;
+          ctx.lineWidth = 0.75;
+          ctx.strokeRect(p.sx - rectW / 2, p.sy - rectH / 2, rectW, rectH);
+        }
+      }
 
-      // label — show when node is close/large enough to read
-      if (r > 2.5 && a > 0.18) {
-        const labelAlpha = Math.min(1, (r - 2.5) / 6) * a * 0.85;
+      // Label — only off-die. Hide during tapeout.
+      if (r > 2.5 && a > 0.18 && ce < 0.3) {
+        const labelAlpha = Math.min(1, (r - 2.5) / 6) * a * 0.85 * (1 - ce / 0.3);
         const fontSize = Math.max(9, Math.min(13, r * 1.1));
         ctx.font = `300 ${fontSize}px "JetBrains Mono", monospace`;
         ctx.fillStyle = `rgba(245, 242, 235, ${labelAlpha})`;
@@ -283,29 +368,54 @@
       }
     }
 
-    // ── Tapeout: draw die seal at centre during hold ──────────
-    if (tapeoutPhase === 2 || (tapeoutPhase === 3 && tapeoutCollapse > 0.05)) {
-      const holdAlpha = tapeoutPhase === 2
-        ? Math.min(1, (t - tapeoutT0 + (tapeoutPhase === 2 ? 0 : TAPEOUT_HOLD)) / 300)
-        : tapeoutCollapse;
-      const sz = 52;
-      const cx = W / 2, cy = H / 2;
-      const mk = 8; // corner mark length
-      ctx.strokeStyle = `rgba(255,199,90,${holdAlpha * 0.9})`;
+    // ── Tapeout: draw silicon die frame + IO + labels (on top) ──
+    if (c > 0.05) {
+      const oa = Math.min(1, (c - 0.05) / 0.4);
+      const gold = `rgba(255,199,90,${oa})`;
+      const goldDim = `rgba(255,199,90,${oa * 0.45})`;
+
+      // Die outline
+      ctx.strokeStyle = gold;
       ctx.lineWidth = 1.5;
-      // die outline
-      ctx.strokeRect(cx - sz/2, cy - sz/2, sz, sz);
-      // corner crosshair marks
-      for (const [dx, dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]) {
-        const ox = cx + dx * sz/2, oy = cy + dy * sz/2;
-        ctx.beginPath(); ctx.moveTo(ox + dx * mk, oy); ctx.lineTo(ox, oy); ctx.lineTo(ox, oy + dy * mk); ctx.stroke();
+      ctx.strokeRect(dieX, dieY, dieW, dieH);
+
+      // Corner alignment marks (extending outward)
+      const m = 14;
+      const corners = [
+        [dieX,        dieY,        1,  1],
+        [dieX + dieW, dieY,       -1,  1],
+        [dieX,        dieY + dieH, 1, -1],
+        [dieX + dieW, dieY + dieH,-1, -1],
+      ];
+      for (const [cx2, cy2, dx, dy] of corners) {
+        ctx.beginPath();
+        ctx.moveTo(cx2 - dx * m * 0.6, cy2);
+        ctx.lineTo(cx2 + dx * m * 0.4, cy2);
+        ctx.moveTo(cx2, cy2 - dy * m * 0.6);
+        ctx.lineTo(cx2, cy2 + dy * m * 0.4);
+        ctx.stroke();
       }
-      // centre label
-      ctx.font = `400 10px "JetBrains Mono", monospace`;
-      ctx.fillStyle = `rgba(255,199,90,${holdAlpha * 0.75})`;
+
+      // IO pad ring (small dim ticks around perimeter)
+      ctx.fillStyle = goldDim;
+      const padStep = 14;
+      for (let x = dieX + 22; x < dieX + dieW - 22; x += padStep) {
+        ctx.fillRect(x, dieY - 5, 3, 3);
+        ctx.fillRect(x, dieY + dieH + 2, 3, 3);
+      }
+      for (let y = dieY + 22; y < dieY + dieH - 22; y += padStep) {
+        ctx.fillRect(dieX - 5, y, 3, 3);
+        ctx.fillRect(dieX + dieW + 2, y, 3, 3);
+      }
+
+      // Header / footer labels
+      ctx.font = '500 11px "JetBrains Mono", monospace';
+      ctx.fillStyle = gold;
       ctx.textAlign = 'center';
-      ctx.fillText('TAPEOUT COMPLETE', cx, cy - sz/2 - 10);
-      ctx.fillText('DRC: CLEAN · LVS: CLEAN', cx, cy + sz/2 + 18);
+      ctx.fillText('TAPEOUT COMPLETE · KAUSHIK_VADA · DIE 1.0', dieX + dieW / 2, dieY - 24);
+      ctx.font = '400 10px "JetBrains Mono", monospace';
+      ctx.fillStyle = `rgba(255,199,90,${oa * 0.75})`;
+      ctx.fillText(`DRC: CLEAN · LVS: CLEAN · ${nodes.length} CELLS · ${COLS}×${NUM_ROWS} GRID`, dieX + dieW / 2, dieY + dieH + 30);
       ctx.textAlign = 'left';
     }
   }
