@@ -117,6 +117,27 @@
   let targetCamX = 0, targetCamY = 0;
   let camX = 0, camY = 0;
 
+  // ── Easter egg state ──────────────────────────────────────────
+  let rtlProgress = 0, rtlTarget = 0;
+  // tapeout: 0=idle 1=collapsing 2=hold 3=expanding
+  let tapeoutPhase = 0, tapeoutCollapse = 0, tapeoutT0 = 0;
+  const TAPEOUT_IN = 1400, TAPEOUT_HOLD = 1000, TAPEOUT_OUT = 1400;
+
+  let keyBuf = '';
+  window.addEventListener('keydown', e => {
+    if (['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)) return;
+    keyBuf = (keyBuf + e.key).slice(-8).toLowerCase();
+    if (keyBuf.endsWith('rtl')) {
+      rtlTarget = 1;
+      clearTimeout(window._rtlTimer);
+      window._rtlTimer = setTimeout(() => { rtlTarget = 0; }, 2600);
+    }
+    if (keyBuf.endsWith('tapeout') && tapeoutPhase === 0) {
+      tapeoutPhase = 1;
+      tapeoutT0 = performance.now();
+    }
+  });
+
   function project(x, y, z) {
     const rz = z - cameraZ;
     if (rz <= NEAR) return null;
@@ -140,6 +161,23 @@
   function render(t) {
     ctx.clearRect(0, 0, W, H);
 
+    // ── Easter egg tick ───────────────────────────────────────
+    rtlProgress += (rtlTarget - rtlProgress) * 0.07;
+
+    if (tapeoutPhase > 0) {
+      const elapsed = t - tapeoutT0;
+      if (tapeoutPhase === 1) {
+        tapeoutCollapse = Math.min(1, elapsed / TAPEOUT_IN);
+        if (tapeoutCollapse >= 1) { tapeoutPhase = 2; tapeoutT0 = t; }
+      } else if (tapeoutPhase === 2) {
+        tapeoutCollapse = 1;
+        if (elapsed > TAPEOUT_HOLD) { tapeoutPhase = 3; tapeoutT0 = t; }
+      } else if (tapeoutPhase === 3) {
+        tapeoutCollapse = 1 - Math.min(1, elapsed / TAPEOUT_OUT);
+        if (tapeoutCollapse <= 0) { tapeoutPhase = 0; tapeoutCollapse = 0; }
+      }
+    }
+
     // Smooth camera position from scroll & mouse
     const docH = document.documentElement.scrollHeight - window.innerHeight;
     const scrollFrac = docH > 0 ? Math.min(1, Math.max(0, window.scrollY / docH)) : 0;
@@ -159,14 +197,14 @@
     camX += (targetCamX - camX) * 0.04;
     camY += (targetCamY - camY) * 0.04;
 
-    // Pre-project all nodes once
+    // Pre-project all nodes once (tapeout squeezes xy toward 0)
+    const squeeze = 1 - tapeoutCollapse;
     const proj = new Array(nodes.length);
     for (let i = 0; i < nodes.length; i++) {
       const n = nodes[i];
-      // gentle per-node breathing in xy
-      const wob = 8;
-      const xx = n.x + Math.cos(t * 0.0004 + n.phase) * wob;
-      const yy = n.y + Math.sin(t * 0.0005 + n.phase * 1.3) * wob;
+      const wob = 8 * squeeze;
+      const xx = (n.x + Math.cos(t * 0.0004 + n.phase) * wob) * squeeze;
+      const yy = (n.y + Math.sin(t * 0.0005 + n.phase * 1.3) * wob) * squeeze;
       proj[i] = project(xx, yy, n.z);
     }
 
@@ -186,10 +224,22 @@
       const fb = fogAlpha(e.pb.depth);
       const a = Math.min(fa, fb) * 0.35;
       if (a < 0.01) continue;
-      ctx.strokeStyle = `rgba(180, 170, 230, ${a})`;
+      // RTL mode: edges snap to copper colour during Manhattan re-route
+      const edgeR = Math.round(180 + rtlProgress * 55);
+      const edgeG = Math.round(170 - rtlProgress * 100);
+      const edgeB = Math.round(230 - rtlProgress * 170);
+      ctx.strokeStyle = `rgba(${edgeR},${edgeG},${edgeB},${a})`;
       ctx.lineWidth = Math.max(0.4, 0.9 * Math.min(e.pa.scale, e.pb.scale));
       ctx.beginPath();
       ctx.moveTo(e.pa.sx, e.pa.sy);
+      if (rtlProgress > 0.01) {
+        // Blend corner from midpoint (straight) → Manhattan elbow
+        const mx = (e.pa.sx + e.pb.sx) * 0.5;
+        const my = (e.pa.sy + e.pb.sy) * 0.5;
+        const cx = mx + (e.pb.sx - mx) * rtlProgress;
+        const cy = my + (e.pa.sy - my) * rtlProgress;
+        ctx.lineTo(cx, cy);
+      }
       ctx.lineTo(e.pb.sx, e.pb.sy);
       ctx.stroke();
     }
@@ -231,6 +281,32 @@
         ctx.fillStyle = `rgba(245, 242, 235, ${labelAlpha})`;
         ctx.fillText(n.label, p.sx + r + 5, p.sy + fontSize * 0.35);
       }
+    }
+
+    // ── Tapeout: draw die seal at centre during hold ──────────
+    if (tapeoutPhase === 2 || (tapeoutPhase === 3 && tapeoutCollapse > 0.05)) {
+      const holdAlpha = tapeoutPhase === 2
+        ? Math.min(1, (t - tapeoutT0 + (tapeoutPhase === 2 ? 0 : TAPEOUT_HOLD)) / 300)
+        : tapeoutCollapse;
+      const sz = 52;
+      const cx = W / 2, cy = H / 2;
+      const mk = 8; // corner mark length
+      ctx.strokeStyle = `rgba(255,199,90,${holdAlpha * 0.9})`;
+      ctx.lineWidth = 1.5;
+      // die outline
+      ctx.strokeRect(cx - sz/2, cy - sz/2, sz, sz);
+      // corner crosshair marks
+      for (const [dx, dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]) {
+        const ox = cx + dx * sz/2, oy = cy + dy * sz/2;
+        ctx.beginPath(); ctx.moveTo(ox + dx * mk, oy); ctx.lineTo(ox, oy); ctx.lineTo(ox, oy + dy * mk); ctx.stroke();
+      }
+      // centre label
+      ctx.font = `400 10px "JetBrains Mono", monospace`;
+      ctx.fillStyle = `rgba(255,199,90,${holdAlpha * 0.75})`;
+      ctx.textAlign = 'center';
+      ctx.fillText('TAPEOUT COMPLETE', cx, cy - sz/2 - 10);
+      ctx.fillText('DRC: CLEAN · LVS: CLEAN', cx, cy + sz/2 + 18);
+      ctx.textAlign = 'left';
     }
   }
 

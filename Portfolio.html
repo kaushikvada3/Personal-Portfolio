@@ -512,6 +512,42 @@
     color: var(--ink-quiet);
   }
 
+  /* ── Easter egg: terminal drawer ───────────────────────────── */
+  #terminal-drawer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 320px;
+    background: #08080B;
+    border-top: 1px solid #44FF99;
+    z-index: 200;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    font-family: var(--mono); font-size: 12px; line-height: 1.8;
+    color: #44FF99;
+    padding: 20px 32px 20px;
+    overflow: hidden;
+  }
+  #terminal-drawer.open { transform: translateY(0); }
+  #terminal-drawer .t-close {
+    position: absolute; top: 14px; right: 20px;
+    background: none; border: none; color: #44FF99;
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.14em; cursor: pointer; opacity: 0.6;
+  }
+  #terminal-drawer .t-close:hover { opacity: 1; }
+  #terminal-output { white-space: pre; }
+  .t-dim { color: rgba(68,255,153,0.4); }
+  .t-gold { color: var(--halo-3); }
+
+  /* ── Easter egg: Kaushik letter animation ───────────────────── */
+  .hero-name .l1 { cursor: pointer; }
+  .hero-name .l1 .letter { display: inline-block; transition: none; }
+
+  /* ── Easter egg: Vada die float ─────────────────────────────── */
+  @keyframes die-float {
+    0%   { transform: translateY(0)   scale(1);   opacity: 0.9; }
+    100% { transform: translateY(-140px) scale(0.5); opacity: 0; }
+  }
+
   @media (max-width: 880px) {
     .nav { padding: 16px 20px; }
     .nav-links { display: none; }
@@ -736,5 +772,161 @@
   <span>© KV · all rights · all wrongs reversible</span>
 </footer>
 <script src="graph-fly.js"></script>
+
+<!-- ── Easter egg: terminal drawer ───────────────────────────── -->
+<div id="terminal-drawer" aria-hidden="true">
+  <button class="t-close" onclick="closeTerminal()">ESC / close</button>
+  <div id="terminal-output"></div>
+</div>
+
+<script>
+(function () {
+  // ── 3: Terminal drawer (triple-click the green dot / mark) ──
+  const SYNTH_LINES = [
+    ['dim', '> synthesizing kaushik.rtl...'],
+    ['dim', 'Reading design...                                    OK'],
+    ['dim', 'Elaborating module: KaushikVada                      OK'],
+    ['dim', ''],
+    ['dim', 'Timing Report — Worst Negative Slack per path:'],
+    ['dim', '────────────────────────────────────────────────────────'],
+    ['norm','  Verilog               primary    ████████████  WNS +0.0ns'],
+    ['norm','  RTL design            primary    ████████████  WNS +0.0ns'],
+    ['norm','  RISC-V                primary    ████████████  WNS +0.0ns'],
+    ['norm','  Pipelining            primary    ████████████  WNS +0.0ns'],
+    ['norm','  C / C++               primary    ████████████  WNS +0.0ns'],
+    ['norm','  Python                primary    ████████████  WNS +0.0ns'],
+    ['norm','  Unix / Linux          primary    ████████████  WNS +0.0ns'],
+    ['norm','  SDC constraints       working    ████████░░░░  WNS +1.2ns'],
+    ['norm','  Synopsys DC           working    ████████░░░░  WNS +0.8ns'],
+    ['norm','  Synopsys FC           working    ████████░░░░  WNS +0.9ns'],
+    ['norm','  Xilinx Vivado         working    ████████░░░░  WNS +1.1ns'],
+    ['norm','  APB · UART            working    ████████░░░░  WNS +1.4ns'],
+    ['dim', ''],
+    ['gold','  Synthesis complete. Timing: CLEAN. GPA: 3.93.'],
+    ['dim', '  Area: optimal. Power: negligible. Ambition: unbounded.'],
+    ['dim', ''],
+    ['dim', '> _'],
+  ];
+
+  let dotClicks = 0, dotTimer;
+  const mark = document.querySelector('.nav .mark');
+  if (mark) {
+    mark.addEventListener('click', () => {
+      dotClicks++;
+      clearTimeout(dotTimer);
+      dotTimer = setTimeout(() => { dotClicks = 0; }, 600);
+      if (dotClicks >= 3) { dotClicks = 0; openTerminal(); }
+    });
+  }
+
+  window.openTerminal = function () {
+    const drawer = document.getElementById('terminal-drawer');
+    const out = document.getElementById('terminal-output');
+    out.innerHTML = '';
+    drawer.classList.add('open');
+    SYNTH_LINES.forEach(([type, text], i) => {
+      setTimeout(() => {
+        const span = document.createElement('span');
+        span.className = type === 'dim' ? 't-dim' : type === 'gold' ? 't-gold' : '';
+        span.textContent = text + '\n';
+        out.appendChild(span);
+        out.scrollTop = out.scrollHeight;
+      }, i * 55);
+    });
+  };
+
+  window.closeTerminal = function () {
+    document.getElementById('terminal-drawer').classList.remove('open');
+  };
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeTerminal();
+  });
+
+  // ── 4: Kaushik letter scatter on click ──────────────────────
+  const l1 = document.querySelector('.hero-name .l1');
+  if (l1) {
+    l1.innerHTML = [...'Kaushik'].map(c =>
+      `<span class="letter">${c}</span>`
+    ).join('');
+
+    l1.addEventListener('click', () => {
+      const letters = l1.querySelectorAll('.letter');
+      let scattered = false;
+      letters.forEach(ltr => {
+        if (ltr.style.transform && ltr.style.transform !== 'none' && !ltr.style.transform.includes('0px')) {
+          scattered = true;
+        }
+      });
+      if (scattered) return;
+      // scatter
+      letters.forEach(ltr => {
+        const dx = (Math.random() - 0.5) * 380;
+        const dy = (Math.random() - 0.5) * 260;
+        const rot = (Math.random() - 0.5) * 72;
+        ltr.style.transition = `transform ${0.28 + Math.random() * 0.18}s cubic-bezier(0.2,0,1,0.4), opacity 0.3s ease`;
+        ltr.style.transform = `translate(${dx}px,${dy}px) rotate(${rot}deg)`;
+        ltr.style.opacity = '0';
+      });
+      // reassemble
+      setTimeout(() => {
+        letters.forEach(ltr => {
+          ltr.style.transition = 'transform 0.7s cubic-bezier(0.2,0.8,0.2,1), opacity 0.5s ease 0.1s';
+          ltr.style.transform = 'translate(0,0) rotate(0deg)';
+          ltr.style.opacity = '1';
+        });
+      }, 700);
+    });
+  }
+
+  // ── 5: Long-press "Vada" → floating die outline ─────────────
+  const l2 = document.querySelector('.hero-name .l2');
+  if (l2) {
+    let pressTimer;
+    const start = () => {
+      pressTimer = setTimeout(() => spawnDie(l2), 500);
+    };
+    const cancel = () => clearTimeout(pressTimer);
+    l2.addEventListener('mousedown', start);
+    l2.addEventListener('mouseup', cancel);
+    l2.addEventListener('mouseleave', cancel);
+    l2.addEventListener('touchstart', start, { passive: true });
+    l2.addEventListener('touchend', cancel);
+  }
+
+  function spawnDie(el) {
+    const rect = el.getBoundingClientRect();
+    const die = document.createElement('div');
+    const sz = 44;
+    const mk = 7;
+    const gold = 'rgba(255,199,90,0.85)';
+    die.style.cssText = `
+      position:fixed;
+      left:${rect.left + rect.width * 0.35 - sz / 2}px;
+      top:${rect.top - sz - 8}px;
+      width:${sz}px; height:${sz}px;
+      border: 1.5px solid ${gold};
+      pointer-events:none; z-index:300;
+      animation: die-float 2.2s ease-out forwards;
+    `;
+    const corner = (t,r,b,l) => {
+      const d = document.createElement('div');
+      const bstyle = `1.5px solid ${gold}`;
+      d.style.cssText = `position:absolute;width:${mk}px;height:${mk}px;
+        ${t!==null?`top:${t}px;`:''} ${r!==null?`right:${r}px;`:''}
+        ${b!==null?`bottom:${b}px;`:''} ${l!==null?`left:${l}px;`:''}
+        ${t!==null?`border-top:${bstyle};`:''} ${b!==null?`border-bottom:${bstyle};`:''}
+        ${l!==null?`border-left:${bstyle};`:''} ${r!==null?`border-right:${bstyle};`:''}`;
+      return d;
+    };
+    die.appendChild(corner(-3,null,null,-3));
+    die.appendChild(corner(-3,-3,null,null));
+    die.appendChild(corner(null,null,-3,-3));
+    die.appendChild(corner(null,-3,-3,null));
+    document.body.appendChild(die);
+    setTimeout(() => die.remove(), 2400);
+  }
+})();
+</script>
 </body>
 </html>
