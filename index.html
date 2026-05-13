@@ -647,6 +647,50 @@
     cursor: grab;
   }
   #chip-3d:active { cursor: grabbing; }
+  #flow-bay {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  #flow-bay canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .flow-controls {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+  }
+  .flow-controls button {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(245,242,235,0.78);
+    font-family: var(--mono);
+    font-size: 11px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .flow-controls button:hover {
+    background: rgba(255,199,90,0.10);
+    border-color: rgba(255,199,90,0.40);
+    color: var(--halo-3);
+  }
+  .flow-controls button.active {
+    background: rgba(255,199,90,0.14);
+    border-color: rgba(255,199,90,0.55);
+    color: var(--halo-3);
+  }
   .chip-label {
     position: absolute;
     top: 0; left: 0;
@@ -973,26 +1017,23 @@
     </div>
   </div>
 
-  <!-- 3D chip bay -->
-  <div class="chip-bay">
+  <!-- Flow bay: one module, three abstractions, one clock -->
+  <div class="chip-bay flow-bay-grid">
     <div class="chip-stage-wrap">
-      <div id="chip-3d"></div>
-      <span class="chip-label">die · 12,847 cells</span>
-      <span class="chip-label">QFN-56 leads · gold</span>
-      <span class="chip-label">substrate · KV-01</span>
+      <div id="flow-bay"></div>
     </div>
     <div class="chip-caption">
-      <span class="chip-eyebrow">01a · die inspect</span>
-      <h3>One <em>floorplan</em>, hand-placed.</h3>
-      <p>A procedural KV-01 chip — package, die, bond pads, gull-wing leads. Drag to inspect angles, click the package to seat or lift the lid.</p>
+      <span class="chip-eyebrow">01a · flow visualizer</span>
+      <h3>One <em>module</em>, three abstractions.</h3>
+      <p>A 4-bit synchronous counter rendered live as RTL gates, placed-and-routed standard cells, and a scrolling waveform — all driven by one shared clock. Same bit-state across every view.</p>
       <div class="chip-spec">
-        <span class="k">Process</span><span class="v">7nm</span>
-        <span class="k">Cells</span><span class="v">12,847</span>
-        <span class="k">Metal layers</span><span class="v">M1 – M6</span>
-        <span class="k">DRC</span><span class="v">clean</span>
-        <span class="k">Status</span><span class="v" style="color:var(--halo-3)">▶ rotating live</span>
+        <span class="k">Module</span><span class="v">counter4.sv</span>
+        <span class="k">Cells</span><span class="v">8 (4 ADDH · 4 DFFX1)</span>
+        <span class="k">Routing</span><span class="v">M1 / M2 + vias</span>
+        <span class="k">Period</span><span class="v">840 ms</span>
+        <span class="k">Status</span><span class="v" style="color:var(--halo-3)">▶ ticking live</span>
       </div>
-      <div class="chip-hint" data-comment-anchor="c58ea22e09-div">click <kbd>package</kbd> to toggle lid · drag to inspect</div>
+      <div class="chip-hint">hover any <kbd>signal</kbd> to highlight across views · use <kbd>⏭</kbd> to step</div>
     </div>
   </div>
 </section>
@@ -1146,15 +1187,8 @@
 <script src="project-demos.js"></script>
 <script src="eggs.js"></script>
 
-<!-- Three.js for the procedural chip in the About section -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
-  }
-}
-</script>
-<script type="module" src="chip-3d.js"></script>
+<!-- Flow visualizer in the About section: counter4 in 4 lockstep views -->
+<script defer src="flow-bay.js"></script>
 
 <!-- ── Easter egg: terminal drawer ───────────────────────────── -->
 <div id="terminal-drawer" aria-hidden="true">

@@ -2,15 +2,15 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Portfolio v2 (Vite)",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "Portfolio v2", "run", "dev", "--", "--port", "5173"],
-      "port": 5173
+      "name": "Portfolio Cinema v2 (static)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "serve", ".", "-l", "5175", "--no-clipboard"],
+      "port": 5175
     },
     {
-      "name": "Portfolio Cinema (static)",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", ".", "-l", "5174", "--no-clipboard"],
+      "name": "Portfolio v2 archived (Vite)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "Archives/Portfolio v2", "run", "dev", "--", "--port", "5174"],
       "port": 5174
     }
   ]

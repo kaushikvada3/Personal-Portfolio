@@ -140,7 +140,7 @@
   // sits centered for a beat, flash fires + body class flips, cells
   // expand outward, hero fades in over the top.
   const INTRO_HOLD_MS = 900;
-  const INTRO_EXPAND_MS = 1800;
+  const INTRO_EXPAND_MS = 2400;
   let introPhase = 'hold';        // 'hold' | 'expand' | 'done'
   let introT0 = performance.now();
   let bangAt = 0;
@@ -196,7 +196,16 @@
   }
 
   function render(t) {
-    ctx.clearRect(0, 0, W, H);
+    // During the intro expand, paint a translucent backdrop instead of
+    // clearing — cells leave motion trails as they streak from die-grid
+    // positions to their final graph positions. Looks like the standard
+    // cells exploding outward and constructing the network in mid-air.
+    if (introPhase === 'expand') {
+      ctx.fillStyle = 'rgba(8, 8, 11, 0.16)';
+      ctx.fillRect(0, 0, W, H);
+    } else {
+      ctx.clearRect(0, 0, W, H);
+    }
 
     // ── Intro: deterministic, one pass ─────────────────────
     if (introPhase !== 'done') {
@@ -314,8 +323,13 @@
     // Tapeout also forces Manhattan routing once cells have settled
     const tapeManhattan = c < 0.4 ? 0 : Math.min(1, (c - 0.4) / 0.5);
     const manhattan = Math.max(rtlProgress, tapeManhattan);
-    // During tapeout, fade edges so they read as light routing, not chaos
-    const edgeFade = c < 0.5 ? 1 : Math.max(0.35, 1 - (c - 0.5) * 0.9);
+    // Edges are hidden while cells are still in / near the die layout,
+    // then fade in during the last stretch of the expand so the graph
+    // visibly "constructs" itself once the cells have arrived.
+    // Tapeout (manual egg) keeps its old behaviour — edges stay as faint
+    // routing — by using the manhattan term as a floor.
+    const constructFade = c > 0.55 ? 0 : Math.pow(1 - c / 0.55, 1.35);
+    const edgeFade = Math.max(constructFade, manhattan * 0.4);
 
     for (const e of drawableLinks) {
       const fa = Math.max(fogAlpha(e.pa.depth), (e.pa.cellEase || 0) * 0.85);

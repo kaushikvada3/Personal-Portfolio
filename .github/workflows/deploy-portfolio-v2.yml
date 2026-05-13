@@ -12,7 +12,7 @@ on:
       - 'graph.json'
       - 'project-demos.js'
       - 'eggs.js'
-      - 'chip-3d.js'
+      - 'flow-bay.js'
       - '.github/workflows/deploy-portfolio-v2.yml'
   workflow_dispatch:
 
@@ -44,7 +44,7 @@ jobs:
           cp graph.json _site/graph.json
           cp project-demos.js _site/project-demos.js
           cp eggs.js _site/eggs.js
-          cp chip-3d.js _site/chip-3d.js
+          cp flow-bay.js _site/flow-bay.js
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
