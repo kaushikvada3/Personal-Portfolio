@@ -127,11 +127,25 @@
   let targetCamX = 0, targetCamY = 0;
   let camX = 0, camY = 0;
 
-  // ── Easter egg state ──────────────────────────────────────────
-  let rtlProgress = 0, rtlTarget = 0;
-  // tapeout: 0=idle 1=collapsing 2=hold 3=expanding
+  // Tapeout state machine — driven by the `tapeout` / `pnr` palette
+  // commands and the typed-key egg. Idle at page load.
   let tapeoutPhase = 0, tapeoutCollapse = 0, tapeoutT0 = 0;
   const TAPEOUT_IN = 1500, TAPEOUT_HOLD = 2200, TAPEOUT_OUT = 1400;
+
+  // ─── INTRO: cleaner big-bang on page load ───────────────────
+  // One linear state machine: HOLD die → BANG (flash) → EXPAND.
+  // Independent from the tapeout command above so the two never tangle.
+  // Hidden CSS class `.kv-booted` on body switches hero/nav from hidden
+  // to fade-in animated; the page loads with hero invisible, the die
+  // sits centered for a beat, flash fires + body class flips, cells
+  // expand outward, hero fades in over the top.
+  const INTRO_HOLD_MS = 900;
+  const INTRO_EXPAND_MS = 1800;
+  let introPhase = 'hold';        // 'hold' | 'expand' | 'done'
+  let introT0 = performance.now();
+  let bangAt = 0;
+  // Easter egg state
+  let rtlProgress = 0, rtlTarget = 0;
 
   let keyBuf = '';
   window.addEventListener('keydown', e => {
@@ -175,15 +189,34 @@
   }
 
   function fogAlpha(rz) {
-    // 1 in the mid-range, fade to 0 at near & far. Wider window than before
-    // so more of the tube is visible at any moment.
+    // Wider visibility window — louder graph, more of the tube on-screen at once.
     const nearFade = Math.min(1, (rz - NEAR) / 100);
-    const farFade = Math.min(1, Math.max(0, (FAR - rz) / 1100));
+    const farFade = Math.min(1, Math.max(0, (FAR - rz) / 1800));
     return Math.max(0, Math.min(1, nearFade * farFade));
   }
 
   function render(t) {
     ctx.clearRect(0, 0, W, H);
+
+    // ── Intro: deterministic, one pass ─────────────────────
+    if (introPhase !== 'done') {
+      const dt = t - introT0;
+      if (introPhase === 'hold') {
+        tapeoutCollapse = 1;
+        if (dt > INTRO_HOLD_MS) {
+          introPhase = 'expand';
+          introT0 = t;
+          bangAt = t;
+          try { window.dispatchEvent(new CustomEvent('kv-bang')); } catch (_) {}
+        }
+      } else if (introPhase === 'expand') {
+        const k = Math.min(1, (t - introT0) / INTRO_EXPAND_MS);
+        // ease-out cubic — fast at start, settles at end
+        const eased = 1 - Math.pow(1 - k, 3);
+        tapeoutCollapse = 1 - eased;
+        if (k >= 1) { introPhase = 'done'; tapeoutCollapse = 0; }
+      }
+    }
 
     // ── Easter egg tick ───────────────────────────────────────
     rtlProgress += (rtlTarget - rtlProgress) * 0.07;
@@ -256,6 +289,7 @@
       } else {
         if (p) p.cellEase = 0;
       }
+
       proj[i] = p;
     }
 
@@ -286,13 +320,13 @@
     for (const e of drawableLinks) {
       const fa = Math.max(fogAlpha(e.pa.depth), (e.pa.cellEase || 0) * 0.85);
       const fb = Math.max(fogAlpha(e.pb.depth), (e.pb.cellEase || 0) * 0.85);
-      const a = Math.min(fa, fb) * 0.35 * edgeFade;
+      const a = Math.min(fa, fb) * 0.55 * edgeFade;
       if (a < 0.01) continue;
       const edgeR = Math.round(180 + manhattan * 55);
       const edgeG = Math.round(170 - manhattan * 100);
       const edgeB = Math.round(230 - manhattan * 170);
       ctx.strokeStyle = `rgba(${edgeR},${edgeG},${edgeB},${a})`;
-      ctx.lineWidth = Math.max(0.4, 0.9 * Math.min(e.pa.scale, e.pb.scale));
+      ctx.lineWidth = Math.max(0.6, 1.4 * Math.min(e.pa.scale, e.pb.scale));
       ctx.beginPath();
       ctx.moveTo(e.pa.sx, e.pa.sy);
       if (manhattan > 0.01) {
@@ -323,11 +357,11 @@
       // Halo fades out as cells settle into the die grid
       const haloMult = (1 - ce);
       if (haloMult > 0.04) {
-        const halo = r * (2 + 1.5 * a);
+        const halo = r * (3.2 + 2.0 * a);
         const grad = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, halo);
         const haloA = a * haloMult;
-        grad.addColorStop(0, n.color + Math.round(haloA * 70).toString(16).padStart(2, '0'));
-        grad.addColorStop(0.6, n.color + Math.round(haloA * 18).toString(16).padStart(2, '0'));
+        grad.addColorStop(0, n.color + Math.round(haloA * 110).toString(16).padStart(2, '0'));
+        grad.addColorStop(0.6, n.color + Math.round(haloA * 30).toString(16).padStart(2, '0'));
         grad.addColorStop(1, n.color + '00');
         ctx.fillStyle = grad;
         ctx.beginPath();
@@ -418,6 +452,51 @@
       ctx.fillText(`DRC: CLEAN · LVS: CLEAN · ${nodes.length} CELLS · ${COLS}×${NUM_ROWS} GRID`, dieX + dieW / 2, dieY + dieH + 30);
       ctx.textAlign = 'left';
     }
+
+    // ── Bang flash + shockwave (intro only, deterministic) ───
+    if (bangAt > 0) {
+      const sb = t - bangAt;
+      if (sb < 1400) {
+        const cx = W / 2, cy = H / 2;
+
+        // 1) Initial near-white flash — short, sharp
+        const flashA = Math.max(0, 1 - sb / 280);
+        if (flashA > 0.01) {
+          ctx.fillStyle = `rgba(255,250,235,${flashA * 0.95})`;
+          ctx.fillRect(0, 0, W, H);
+        }
+
+        // 2) Gold radial bloom — longer, softer fade
+        const bloomT = Math.min(1, sb / 900);
+        if (bloomT < 1) {
+          const bA = Math.pow(1 - bloomT, 1.4) * 0.55;
+          const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.hypot(W, H));
+          grad.addColorStop(0, `rgba(255,225,160,${bA})`);
+          grad.addColorStop(0.4, `rgba(255,199,90,${bA * 0.5})`);
+          grad.addColorStop(1, 'rgba(255,199,90,0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, W, H);
+        }
+
+        // 3) Two shockwave rings — outer (white, leading), inner (gold, trailing)
+        const ringT = Math.min(1, sb / 1200);
+        if (ringT < 1) {
+          const maxR = Math.hypot(W, H) * 0.75;
+          const ringR = ringT * maxR;
+          const fade = Math.pow(1 - ringT, 1.6);
+          ctx.strokeStyle = `rgba(255,255,255,${fade * 0.9})`;
+          ctx.lineWidth = 4 + (1 - ringT) * 7;
+          ctx.beginPath();
+          ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.strokeStyle = `rgba(255,199,90,${fade * 0.7})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(cx, cy, ringR * 0.68, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+    }
   }
 
   // Recompute tube depth on resize / dom changes
@@ -438,7 +517,11 @@
 
   let raf;
   let timer;
+  let frameCount = 0;
   function loop(t) {
+    frameCount++;
+    window.__frameCount = frameCount;
+    window.__lastT = t;
     try { render(t); } catch (e) { console.error('graph-fly render failed', e); return; }
     raf = requestAnimationFrame(loop);
   }

@@ -37,14 +37,57 @@
   }
   ::selection { background: var(--halo-1); color: var(--ink); }
 
-  /* Obsidian-vault graph — ambient background */
+  /* ─── Quiet staggered hero entrance ─── */
+  @keyframes hero-rise {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .nav {
+    animation: hero-rise 1.0s cubic-bezier(0.2,0.8,0.2,1) 0.05s both;
+  }
+  .hero-pre {
+    animation: hero-rise 1.1s cubic-bezier(0.2,0.8,0.2,1) 0.25s both;
+  }
+  .hero-name .l1 {
+    animation: hero-rise 1.2s cubic-bezier(0.2,0.8,0.2,1) 0.40s both;
+  }
+  .hero-name .l2 {
+    animation: hero-rise 1.2s cubic-bezier(0.2,0.8,0.2,1) 0.60s both;
+  }
+  .hero-foot {
+    animation: hero-rise 1.2s cubic-bezier(0.2,0.8,0.2,1) 0.90s both;
+  }
+  .scroll-cue {
+    animation: hero-rise 0.9s ease-out 1.20s both;
+  }
+
+  /* Obsidian-vault graph — ambient background. Soft fade-in on first paint. */
+  @keyframes graph-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 0.78; }
+  }
   #graph-bg {
     position: fixed; inset: 0;
     width: 100vw; height: 100vh;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.5;
-    /* No mask — we want immersion edge-to-edge */
+    opacity: 0.78;
+    animation: graph-fade-in 1.6s ease-out 0.05s both;
+    transition: filter 0.4s ease;
+  }
+  /* Clock + power surge global states (set by command palette) */
+  body.kv-clock #graph-bg { animation: kv-clock-bg 2.2s ease; }
+  body.kv-power #graph-bg { filter: saturate(1.7) brightness(1.25); }
+  body.kv-power .hero-name .l2,
+  body.kv-power .sec-title em,
+  body.kv-power .hero-tag em,
+  body.kv-power .about-quote em { text-shadow: 0 0 24px rgba(255,199,90,0.9); }
+  @keyframes kv-clock-bg {
+    0%   { filter: brightness(1); }
+    20%  { filter: brightness(1.5) saturate(1.4); }
+    40%  { filter: brightness(1); }
+    60%  { filter: brightness(1.4); }
+    100% { filter: brightness(1); }
   }
   /* Make sure all real content sits above the canvas */
   .nav, main, footer, .hero, section { position: relative; z-index: 2; }
@@ -136,7 +179,6 @@
     text-transform: uppercase;
     color: var(--ink-soft);
     margin-bottom: 36px;
-    opacity: 0; animation: rise 1.2s ease-out 0.2s forwards;
   }
   .hero-pre::before { content: ""; width: 36px; height: 1px; background: var(--ink-soft); }
 
@@ -150,12 +192,9 @@
   }
   .hero-name .l1, .hero-name .l2 {
     display: block;
-    opacity: 0;
-    transform: translateY(40px);
-    animation: rise 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   }
-  .hero-name .l1 { animation-delay: 0.4s; }
-  .hero-name .l2 { animation-delay: 0.65s; font-style: italic; font-weight: 300; color: var(--halo-3); }
+  .hero-name .l1 {  }
+  .hero-name .l2 { font-style: italic; font-weight: 300; color: var(--halo-3); }
   @keyframes rise {
     to { opacity: 1; transform: translateY(0); }
   }
@@ -173,7 +212,6 @@
     padding-top: 32px;
     border-top: 1px solid var(--rule);
     align-items: end;
-    opacity: 0; animation: rise 1.4s ease-out 1s forwards;
   }
   .hero-tag {
     font-family: var(--serif);
@@ -559,6 +597,316 @@
     .proj.span-2 { grid-column: auto; aspect-ratio: 4/3; }
     .exp-item { grid-template-columns: 1fr; gap: 12px; padding: 22px; }
     .write-row { grid-template-columns: 1fr; gap: 6px; padding: 16px 0; }
+    .chip-bay { grid-template-columns: 1fr !important; }
+    .cmd-palette .cmd-card { width: 92vw !important; }
+  }
+
+  /* ─── Hero die-morph canvas ──────────────────────────────── */
+  #hero-die {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .hero-name {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ─── 3D chip bay (About section) ────────────────────────── */
+  .chip-bay {
+    margin-top: 80px;
+    display: grid;
+    grid-template-columns: 1.45fr 1fr;
+    gap: 48px;
+    align-items: center;
+    padding: 32px;
+    border: 1px solid var(--rule);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+    position: relative;
+    overflow: hidden;
+  }
+  .chip-bay::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(155,123,255,0.10), transparent 55%),
+                radial-gradient(circle at 80% 60%, rgba(255,199,90,0.08), transparent 55%);
+    pointer-events: none;
+  }
+  .chip-stage-wrap {
+    position: relative;
+    height: 460px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 60%, rgba(10,10,16,0.85), rgba(8,8,11,0.95));
+  }
+  #chip-3d {
+    width: 100%; height: 100%;
+    cursor: grab;
+  }
+  #chip-3d:active { cursor: grabbing; }
+  .chip-label {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,199,90,0.85);
+    background: rgba(8,8,11,0.85);
+    border: 1px solid rgba(255,199,90,0.35);
+    padding: 5px 9px;
+    border-radius: 2px;
+    transform: translate(-9999px, -9999px);
+    transition: opacity 0.25s ease;
+    white-space: nowrap;
+  }
+  .chip-label::before {
+    content: "";
+    position: absolute; left: -16px; top: 50%;
+    width: 14px; height: 1px;
+    background: rgba(255,199,90,0.6);
+  }
+  .chip-caption .chip-eyebrow {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--halo-3);
+    margin-bottom: 14px;
+    display: block;
+  }
+  .chip-caption h3 {
+    font-family: var(--serif);
+    font-weight: 200;
+    font-size: 36px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .chip-caption h3 em { font-style: italic; color: var(--halo-3); }
+  .chip-caption p {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    max-width: 36ch;
+    margin-bottom: 20px;
+  }
+  .chip-spec {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px 18px;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .chip-spec .k { color: var(--ink-quiet); letter-spacing: 0.14em; text-transform: uppercase; font-size: 10px; }
+  .chip-spec .v { color: var(--ink); }
+  .chip-hint {
+    margin-top: 18px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-quiet);
+  }
+  .chip-hint kbd {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin: 0 2px;
+    font-size: 10px;
+  }
+
+  /* ─── Project cards need to host canvas demos ───────────── */
+  .proj { position: relative; }
+  .proj .proj-canvas {
+    mix-blend-mode: lighten;
+  }
+  .proj .proj-bottom {
+    background: linear-gradient(180deg, transparent, rgba(8,8,11,0.78) 35%);
+    padding: 24px 28px 8px;
+    margin: -32px -36px -10px;
+    border-radius: 0 0 16px 16px;
+  }
+
+  /* ─── Command palette ──────────────────────────────────── */
+  .cmd-palette {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 14vh;
+    background: rgba(8,8,11,0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.18s ease, visibility 0.18s ease;
+  }
+  .cmd-palette.open { opacity: 1; visibility: visible; }
+  .cmd-palette .cmd-card {
+    width: min(680px, 92vw);
+    background: rgba(14,14,19,0.96);
+    border: 1px solid rgba(255,199,90,0.22);
+    border-radius: 12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
+    overflow: hidden;
+    transform: translateY(-12px) scale(0.98);
+    transition: transform 0.22s cubic-bezier(0.2,0.8,0.2,1);
+  }
+  .cmd-palette.open .cmd-card { transform: translateY(0) scale(1); }
+  .cmd-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .cmd-prompt { color: var(--halo-3); font-family: var(--mono); font-size: 16px; }
+  .cmd-input {
+    flex: 1;
+    background: transparent;
+    border: 0; outline: 0;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+  .cmd-input::placeholder { color: var(--ink-quiet); }
+  .cmd-esc {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-quiet);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 3px 7px;
+  }
+  .cmd-list { list-style: none; max-height: 360px; overflow-y: auto; padding: 8px 0; }
+  .cmd-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .cmd-row.active { background: rgba(255,199,90,0.10); }
+  .cmd-row-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink);
+    min-width: 90px;
+  }
+  .cmd-row.active .cmd-row-name { color: var(--halo-3); }
+  .cmd-row-desc {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .cmd-foot {
+    display: flex; gap: 18px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--ink-quiet);
+    text-transform: uppercase;
+  }
+  .cmd-foot kbd {
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-right: 4px;
+    font-size: 10px;
+  }
+
+  /* ─── Idle key hint ─────────────────────────────────────── */
+  .kv-hint {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translate(-50%, 20px);
+    background: rgba(14,14,19,0.92);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    color: var(--ink-soft);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2,0.8,0.2,1);
+    z-index: 60;
+    text-transform: uppercase;
+  }
+  .kv-hint kbd {
+    background: rgba(255,199,90,0.14);
+    border: 1px solid rgba(255,199,90,0.35);
+    color: var(--halo-3);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin: 0 2px;
+  }
+  .kv-hint.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  /* ─── Footer makefile egg ──────────────────────────────── */
+  .makefile-egg {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: rgba(68,255,153,0.55);
+    line-height: 1.55;
+    margin: 24px 40px 0;
+    padding: 14px 18px;
+    border: 1px dashed rgba(68,255,153,0.18);
+    border-radius: 6px;
+    background: rgba(68,255,153,0.025);
+    white-space: pre;
+    overflow-x: auto;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .makefile-egg.show { opacity: 1; transform: translateY(0); }
+
+  /* ─── Shift-scroll film flare ──────────────────────────── */
+  .film-flare {
+    position: fixed; inset: 0;
+    z-index: 150;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .film-flare.on { opacity: 1; }
+  .film-flare .film-grain {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1.5px);
+    background-size: 3px 3px, 5px 5px;
+    mix-blend-mode: overlay;
+    opacity: 0.85;
+    animation: grain-shift 0.18s steps(4) infinite;
+  }
+  .film-flare .film-vignette {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 22% 30%, rgba(255,199,90,0.18), transparent 35%),
+      radial-gradient(ellipse at 75% 65%, rgba(110,92,255,0.14), transparent 45%),
+      radial-gradient(circle at 50% 50%, transparent 55%, rgba(8,8,11,0.6));
+  }
+  @keyframes grain-shift {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(-1px, 1px); }
+    50%  { transform: translate(1px, -1px); }
+    75%  { transform: translate(-1px, -1px); }
+    100% { transform: translate(1px, 1px); }
   }
 </style>
 </head>
@@ -622,6 +970,29 @@
       <div class="about-meta-row"><span class="k">Studying</span><span class="v">UCR · BS EE · 3.93 GPA</span></div>
       <div class="about-meta-row"><span class="k">Honors</span><span class="v">UC Regents Distinguished Scholar</span></div>
       <div class="about-meta-row"><span class="k">Graduating</span><span class="v">December 2026</span></div>
+    </div>
+  </div>
+
+  <!-- 3D chip bay -->
+  <div class="chip-bay">
+    <div class="chip-stage-wrap">
+      <div id="chip-3d"></div>
+      <span class="chip-label">die · 12,847 cells</span>
+      <span class="chip-label">QFN-56 leads · gold</span>
+      <span class="chip-label">substrate · KV-01</span>
+    </div>
+    <div class="chip-caption">
+      <span class="chip-eyebrow">01a · die inspect</span>
+      <h3>One <em>floorplan</em>, hand-placed.</h3>
+      <p>A procedural KV-01 chip — package, die, bond pads, gull-wing leads. Drag to inspect angles, click the package to seat or lift the lid.</p>
+      <div class="chip-spec">
+        <span class="k">Process</span><span class="v">7nm</span>
+        <span class="k">Cells</span><span class="v">12,847</span>
+        <span class="k">Metal layers</span><span class="v">M1 – M6</span>
+        <span class="k">DRC</span><span class="v">clean</span>
+        <span class="k">Status</span><span class="v" style="color:var(--halo-3)">▶ rotating live</span>
+      </div>
+      <div class="chip-hint" data-comment-anchor="c58ea22e09-div">click <kbd>package</kbd> to toggle lid · drag to inspect</div>
     </div>
   </div>
 </section>
@@ -691,7 +1062,7 @@
         <span>2025 — present · verilog · vcs</span>
         <span>open ↗</span>
       </div>
-      <div class="proj-bottom">
+      <div class="proj-bottom" data-comment-anchor="8b9d28eabe-div">
         <h3 class="proj-name">A two-level <em>cache</em>, parameterized end-to-end.</h3>
         <p class="proj-desc">Configurable L1–L2 RTL: parametric sets / ways / line size, LRU replacement, write-back / write-allocate. Tag, data, and valid structures with a simple memory model emulating main-memory latency. Validated in Synopsys VCS against crafted access traces, with hit/miss counters and Verdi waveforms confirming LRU and write policy across configurations.</p>
       </div>
@@ -772,6 +1143,18 @@
   <span>© KV · all rights · all wrongs reversible</span>
 </footer>
 <script src="graph-fly.js"></script>
+<script src="project-demos.js"></script>
+<script src="eggs.js"></script>
+
+<!-- Three.js for the procedural chip in the About section -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+  }
+}
+</script>
+<script type="module" src="chip-3d.js"></script>
 
 <!-- ── Easter egg: terminal drawer ───────────────────────────── -->
 <div id="terminal-drawer" aria-hidden="true">
