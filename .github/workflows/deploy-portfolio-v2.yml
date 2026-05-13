@@ -1,4 +1,4 @@
-# Deploys Portfolio Cinema (Portfolio.html + graph-fly.js + graph.json) to GitHub Pages.
+# Deploys Portfolio Cinema v2 (index.html + JS modules) to GitHub Pages.
 name: Deploy Portfolio to GitHub Pages
 
 on:
@@ -7,9 +7,12 @@ on:
       - main
       - eda-tool-theme
     paths:
-      - 'Portfolio.html'
+      - 'index.html'
       - 'graph-fly.js'
       - 'graph.json'
+      - 'project-demos.js'
+      - 'eggs.js'
+      - 'chip-3d.js'
       - '.github/workflows/deploy-portfolio-v2.yml'
   workflow_dispatch:
 
@@ -36,9 +39,12 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p _site
-          cp Portfolio.html _site/index.html
+          cp index.html _site/index.html
           cp graph-fly.js _site/graph-fly.js
           cp graph.json _site/graph.json
+          cp project-demos.js _site/project-demos.js
+          cp eggs.js _site/eggs.js
+          cp chip-3d.js _site/chip-3d.js
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
