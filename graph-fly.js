@@ -9,6 +9,7 @@
   const canvas = document.getElementById('graph-bg');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
   let W = 0, H = 0;
@@ -30,6 +31,28 @@
     6: '#FF7A7A', 7: '#FFC75A', 8: '#7AFFA8',
   };
   const colorOf = (g) => groupColor[g] || '#FFC75A';
+
+  // Pre-baked halo sprites — one radial-gradient canvas per node color.
+  // The render loop drawImage's these instead of allocating a fresh
+  // gradient for every node on every frame (hundreds of allocs/frame).
+  const HALO_PX = 64;
+  const haloSprites = new Map();
+  function haloSprite(color) {
+    let s = haloSprites.get(color);
+    if (s) return s;
+    s = document.createElement('canvas');
+    s.width = s.height = HALO_PX;
+    const sctx = s.getContext('2d');
+    const c = HALO_PX / 2;
+    const g = sctx.createRadialGradient(c, c, 0, c, c, c);
+    g.addColorStop(0,   color + '6e'); // 110/255 — matches old stop-0 alpha
+    g.addColorStop(0.6, color + '1e'); // 30/255  — matches old stop-0.6 alpha
+    g.addColorStop(1,   color + '00');
+    sctx.fillStyle = g;
+    sctx.fillRect(0, 0, HALO_PX, HALO_PX);
+    haloSprites.set(color, s);
+    return s;
+  }
 
   let raw;
   try { raw = await fetch('graph.json').then(r => r.json()); }
@@ -141,7 +164,7 @@
   // expand outward, hero fades in over the top.
   const INTRO_HOLD_MS = 900;
   const INTRO_EXPAND_MS = 2400;
-  let introPhase = 'hold';        // 'hold' | 'expand' | 'done'
+  let introPhase = REDUCED ? 'done' : 'hold';  // 'hold' | 'expand' | 'done'
   let introT0 = performance.now();
   let bangAt = 0;
   // Easter egg state
@@ -372,15 +395,10 @@
       const haloMult = (1 - ce);
       if (haloMult > 0.04) {
         const halo = r * (3.2 + 2.0 * a);
-        const grad = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, halo);
         const haloA = a * haloMult;
-        grad.addColorStop(0, n.color + Math.round(haloA * 110).toString(16).padStart(2, '0'));
-        grad.addColorStop(0.6, n.color + Math.round(haloA * 30).toString(16).padStart(2, '0'));
-        grad.addColorStop(1, n.color + '00');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(p.sx, p.sy, halo, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.globalAlpha = Math.min(1, haloA);
+        ctx.drawImage(haloSprite(n.color), p.sx - halo, p.sy - halo, halo * 2, halo * 2);
+        ctx.globalAlpha = 1;
       }
 
       // Core: lerp circle → filled standard-cell rect
@@ -476,7 +494,7 @@
         // 1) Initial near-white flash — short, sharp
         const flashA = Math.max(0, 1 - sb / 280);
         if (flashA > 0.01) {
-          ctx.fillStyle = `rgba(255,250,235,${flashA * 0.95})`;
+          ctx.fillStyle = `rgba(255,250,235,${flashA * 0.6})`;
           ctx.fillRect(0, 0, W, H);
         }
 

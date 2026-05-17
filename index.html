@@ -3,7 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Kaushik Vada — Cinema</title>
+<title>Kaushik Vada — RTL &amp; VLSI Engineer</title>
+<meta name="description" content="Kaushik Vada — RTL & VLSI engineer. RTL design, verification, and the full RTL-to-GDSII flow. Incoming implementation engineer intern at ARM, undergraduate researcher at UCR." />
+<meta name="author" content="Kaushik Vada" />
+<meta name="theme-color" content="#08080B" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Kaushik Vada — RTL & VLSI Engineer" />
+<meta property="og:description" content="RTL design, verification, and the full RTL-to-GDSII flow — from microarchitecture through tapeout." />
+<meta property="og:url" content="https://kaushikvada3.github.io/portfolio/" />
+<meta property="og:image" content="https://kaushikvada3.github.io/portfolio/og-image.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Kaushik Vada — RTL & VLSI Engineer" />
+<meta name="twitter:description" content="RTL design, verification, and the full RTL-to-GDSII flow — from microarchitecture through tapeout." />
+<meta name="twitter:image" content="https://kaushikvada3.github.io/portfolio/og-image.png" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080B'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' fill='none' stroke='%23FFC75A' stroke-width='1.6'/%3E%3Crect x='14' y='14' width='4' height='4' fill='%23FFC75A'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Inter:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -13,7 +26,7 @@
     --bg-elev: #0E0E13;
     --ink: #F5F2EB;
     --ink-soft: rgba(245, 242, 235, 0.62);
-    --ink-quiet: rgba(245, 242, 235, 0.32);
+    --ink-quiet: rgba(245, 242, 235, 0.46);
     --rule: rgba(245, 242, 235, 0.08);
     --glass-edge: rgba(255, 255, 255, 0.08);
     --halo-1: #6E5CFF;
@@ -22,6 +35,8 @@
     --serif: "Newsreader", "Iowan Old Style", Georgia, serif;
     --sans: "Inter", -apple-system, system-ui, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, monospace;
+    /* Stronger ease-out than the CSS built-in — used for interactive feedback */
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   }
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -36,6 +51,14 @@
     font-weight: 300;
   }
   ::selection { background: var(--halo-1); color: var(--ink); }
+
+  /* Keyboard focus — visible on the dark theme, never on mouse click */
+  :focus-visible {
+    outline: 1px solid var(--halo-3);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  :focus:not(:focus-visible) { outline: none; }
 
   /* ─── Quiet staggered hero entrance ─── */
   @keyframes hero-rise {
@@ -137,28 +160,6 @@
     position: relative;
     overflow: hidden;
   }
-  .hero-orb {
-    display: none;
-  }
-  .hero-orb-OLD {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 90vh; height: 90vh; max-width: 1100px; max-height: 1100px;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 30% 30%, var(--halo-3) 0%, transparent 38%),
-      radial-gradient(circle at 70% 35%, var(--halo-1) 0%, transparent 42%),
-      radial-gradient(circle at 50% 75%, var(--halo-2) 0%, transparent 44%);
-    filter: blur(80px) saturate(115%);
-    opacity: 0.55;
-    animation: breathe 14s ease-in-out infinite;
-    pointer-events: none;
-  }
-  @keyframes breathe {
-    0%,100% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 0.5; }
-    50% { transform: translate(-50%, -50%) scale(1.08) rotate(45deg); opacity: 0.62; }
-  }
   .hero-grid {
     position: absolute; inset: 0;
     background-image:
@@ -195,14 +196,6 @@
   }
   .hero-name .l1 {  }
   .hero-name .l2 { font-style: italic; font-weight: 300; color: var(--halo-3); }
-  @keyframes rise {
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .hero-name .ampm {
-    display: inline-block;
-    font-style: italic; font-weight: 300; color: var(--halo-1);
-    transform: translateX(-12px);
-  }
 
   .hero-foot {
     display: grid;
@@ -243,9 +236,13 @@
     border-radius: 999px;
     background: rgba(255,255,255,0.02);
     backdrop-filter: blur(8px);
-    transition: all 0.25s ease;
+    transition: background-color 0.25s var(--ease-out),
+                color 0.25s var(--ease-out),
+                border-color 0.25s var(--ease-out),
+                transform 0.16s var(--ease-out);
   }
   .hero-cta a:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .hero-cta a:active { transform: scale(0.97); }
   .hero-cta a.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .hero-cta a.primary:hover { background: transparent; color: var(--ink); }
 
@@ -302,12 +299,16 @@
   .sec-count { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: 0.1em; }
 
   /* GLASS CARD */
+  /* Elevated panel. No backdrop-filter — ~11 of these compositing a
+     20px blur over the animated graph was the main scroll-jank source.
+     A semi-opaque dark fill reads near-identical on the dark void and
+     keeps the graph as faint depth behind the card. */
   .glass {
-    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015)),
+      rgba(13,13,18,0.62);
     border: 1px solid var(--glass-edge);
     border-radius: 16px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     position: relative;
   }
   .glass::before {
@@ -358,10 +359,13 @@
     padding: 32px 36px;
     align-items: center;
     transition: transform 0.3s ease, border-color 0.3s ease;
-    cursor: pointer;
   }
-  .exp-item:hover { transform: translateX(8px); border-color: rgba(255,255,255,0.18); }
-  .exp-item:hover .exp-arrow { transform: translateX(8px); color: var(--halo-3); }
+  .exp-item:hover { border-color: rgba(255,255,255,0.18); }
+  .exp-item:hover .exp-arrow { color: var(--halo-3); }
+  @media (hover: hover) {
+    .exp-item:hover { transform: translateX(8px); }
+    .exp-item:hover .exp-arrow { transform: translateX(8px); }
+  }
   .exp-yr { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); letter-spacing: 0.08em; }
   .exp-co {
     font-family: var(--serif);
@@ -391,12 +395,14 @@
     cursor: pointer;
     transition: transform 0.35s ease;
   }
-  .proj:hover { transform: translateY(-6px); }
-  .proj:hover .proj-art { transform: scale(1.04); }
+  @media (hover: hover) {
+    .proj:hover { transform: translateY(-6px); }
+    .proj:hover .proj-art { transform: scale(1.04); }
+  }
   .proj.span-2 { grid-column: span 2; aspect-ratio: 21/9; }
   .proj-art {
     position: absolute; inset: 0;
-    transition: transform 0.6s ease;
+    transition: transform 0.4s var(--ease-out);
     pointer-events: none;
   }
   .proj > .proj-top, .proj > .proj-bottom { position: relative; z-index: 2; }
@@ -453,31 +459,6 @@
   .skill-list li:last-child { border-bottom: none; }
   .skill-list .lvl { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); letter-spacing: 0.08em; }
 
-  /* WRITING */
-  .writing { display: flex; flex-direction: column; }
-  .write-row {
-    display: grid;
-    grid-template-columns: 80px 1fr auto;
-    gap: 32px;
-    padding: 28px 0;
-    border-bottom: 1px solid var(--rule);
-    align-items: center;
-    cursor: pointer;
-    transition: padding 0.25s ease;
-  }
-  .write-row:first-child { border-top: 1px solid var(--rule); }
-  .write-row:hover { padding-left: 16px; }
-  .write-row:hover .write-title { color: var(--halo-3); }
-  .write-num { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: 0.1em; }
-  .write-title {
-    font-family: var(--serif);
-    font-size: 26px;
-    font-weight: 300;
-    letter-spacing: -0.01em;
-    transition: color 0.25s;
-  }
-  .write-meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); letter-spacing: 0.12em; }
-
   /* CONTACT — full bleed cinematic moment */
   .contact {
     padding: 160px 40px;
@@ -521,11 +502,14 @@
     border-radius: 999px;
     background: var(--ink);
     color: var(--bg);
-    transition: all 0.25s ease;
+    transition: background-color 0.25s var(--ease-out),
+                color 0.25s var(--ease-out),
+                transform 0.16s var(--ease-out);
     position: relative;
     z-index: 2;
   }
   .contact-cta:hover { background: transparent; color: var(--ink); }
+  .contact-cta:active { transform: scale(0.98); }
   .contact-foot {
     margin-top: 80px;
     display: flex; justify-content: center; gap: 36px;
@@ -599,16 +583,9 @@
     .write-row { grid-template-columns: 1fr; gap: 6px; padding: 16px 0; }
     .chip-bay { grid-template-columns: 1fr !important; }
     .cmd-palette .cmd-card { width: 92vw !important; }
+    .pd-card { padding: 32px 22px; }
   }
 
-  /* ─── Hero die-morph canvas ──────────────────────────────── */
-  #hero-die {
-    position: absolute;
-    inset: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 1;
-  }
   .hero-name {
     position: relative;
     z-index: 2;
@@ -675,7 +652,10 @@
     height: 28px;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: background-color 0.18s var(--ease-out),
+                border-color 0.18s var(--ease-out),
+                color 0.18s var(--ease-out),
+                transform 0.12s var(--ease-out);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -686,6 +666,7 @@
     border-color: rgba(255,199,90,0.40);
     color: var(--halo-3);
   }
+  .flow-controls button:active { transform: scale(0.92); }
   .flow-controls button.active {
     background: rgba(255,199,90,0.14);
     border-color: rgba(255,199,90,0.55);
@@ -802,7 +783,7 @@
     box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
     overflow: hidden;
     transform: translateY(-12px) scale(0.98);
-    transition: transform 0.22s cubic-bezier(0.2,0.8,0.2,1);
+    transition: transform 0.16s var(--ease-out);
   }
   .cmd-palette.open .cmd-card { transform: translateY(0) scale(1); }
   .cmd-head {
@@ -952,6 +933,135 @@
     75%  { transform: translate(-1px, -1px); }
     100% { transform: translate(1px, 1px); }
   }
+
+  /* ─── Scroll reveal ──────────────────────────────────────────
+     `.reveal` is added by ux.js, so no-JS / reduced-motion users
+     always get fully-rendered content. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.65s var(--ease-out), transform 0.65s var(--ease-out);
+  }
+  .reveal.revealed { opacity: 1; transform: none; }
+
+  /* ─── Project detail lightbox ────────────────────────────── */
+  .proj-detail {
+    position: fixed;
+    inset: 0;
+    z-index: 240;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6vh 24px;
+    background: rgba(8,8,11,0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s var(--ease-out), visibility 0.2s var(--ease-out);
+  }
+  .proj-detail.open { opacity: 1; visibility: visible; }
+  .pd-card {
+    width: min(720px, 94vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 44px 46px;
+    transform: scale(0.94);
+    transition: transform 0.24s var(--ease-out);
+  }
+  .proj-detail.open .pd-card { transform: scale(1); }
+  .pd-close {
+    position: absolute;
+    top: 18px; right: 20px;
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    color: var(--ink-soft);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 6px 13px;
+    cursor: pointer;
+    transition: color 0.18s var(--ease-out), border-color 0.18s var(--ease-out), transform 0.12s var(--ease-out);
+  }
+  .pd-close:hover { color: var(--ink); border-color: var(--ink); }
+  .pd-close:active { transform: scale(0.95); }
+  .pd-eyebrow {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--halo-1);
+    display: block;
+    margin-bottom: 16px;
+  }
+  .pd-title {
+    font-family: var(--serif);
+    font-weight: 200;
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 12px;
+  }
+  .pd-subtitle {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 20px;
+    color: var(--halo-3);
+    margin-bottom: 28px;
+  }
+  .pd-body p {
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+  .pd-spec {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    margin: 28px 0;
+    padding: 22px 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .pd-spec .k { color: var(--ink-quiet); text-transform: uppercase; letter-spacing: 0.12em; font-size: 10px; }
+  .pd-spec .v { color: var(--ink); }
+  .pd-links { display: flex; flex-wrap: wrap; gap: 12px; }
+  .pd-links a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-decoration: none;
+    padding: 12px 20px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out),
+                border-color 0.2s var(--ease-out), transform 0.16s var(--ease-out);
+  }
+  .pd-links a:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .pd-links a:active { transform: scale(0.97); }
+
+  /* ─── Reduced motion ─────────────────────────────────────────
+     Stop the entrances, ambient loops, and grain; collapse smooth
+     scroll. Color/opacity transitions stay — they aid comprehension. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      animation-delay: 0ms !important;
+    }
+    html { scroll-behavior: auto; }
+    .exp-item:hover,
+    .exp-item:hover .exp-arrow,
+    .proj:hover,
+    .proj:hover .proj-art { transform: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -966,12 +1076,12 @@
     <a href="#projects">projects</a>
     <a href="#skills">skills</a>
     <a href="#contact">contact</a>
+    <a href="resume.pdf" target="_blank" rel="noopener">résumé ↗</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-orb"></div>
   <div class="hero-grid"></div>
   <div class="hero-inner">
     <div class="hero-pre">portfolio · vol. ii · 2026 edition</div>
@@ -1189,6 +1299,9 @@
 
 <!-- Flow visualizer in the About section: counter4 in 4 lockstep views -->
 <script defer src="flow-bay.js"></script>
+
+<!-- Scroll reveals + project detail lightbox -->
+<script defer src="ux.js"></script>
 
 <!-- ── Easter egg: terminal drawer ───────────────────────────── -->
 <div id="terminal-drawer" aria-hidden="true">

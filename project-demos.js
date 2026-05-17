@@ -12,6 +12,8 @@
   const projects = document.querySelectorAll('.proj');
   if (!projects.length) return;
 
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   // First proj is Obsidian, second is Two-Level Cache (per current HTML order).
   // Locate them by text content to be safer.
   let obsidianCard = null;
@@ -125,16 +127,34 @@
       }
     }
 
-    let running = true;
+    let running = false;
+    let raf = 0;
     canvas.style.opacity = '1';
-    requestAnimationFrame(loop);
 
-    let raf;
     function loop() {
+      raf = 0;
       if (!running) return;
-      raf = requestAnimationFrame(loop);
       step();
       draw();
+      raf = requestAnimationFrame(loop);
+    }
+
+    if (REDUCED) {
+      // Reduced motion: seed a representative framebuffer, render one frame.
+      for (let i = 0; i < 5; i++) {
+        const s = sprites[i % sprites.length];
+        const x = Math.floor(Math.random() * (FB_W - s.w));
+        const y = Math.floor(Math.random() * (FB_H - s.h));
+        blitSprite(s, x, y);
+        BLIT = { x, y, w: s.w, h: s.h, op: 'COPY', src: i % sprites.length, frame: i + 1 };
+      }
+      lastBlit = -9999;
+      draw();
+    } else {
+      onVisible(card, (vis) => {
+        running = vis;
+        if (vis && !raf) raf = requestAnimationFrame(loop);
+      });
     }
 
     let nextBlitAt = 0;
@@ -279,15 +299,28 @@
       row.shift(); row.push(tag);
     }
 
-    let running = true;
+    let running = false;
+    let raf = 0;
     canvas.style.opacity = '1';
-    requestAnimationFrame(loop);
-    let raf;
+
     function loop() {
+      raf = 0;
       if (!running) return;
-      raf = requestAnimationFrame(loop);
       step();
       draw();
+      raf = requestAnimationFrame(loop);
+    }
+
+    if (REDUCED) {
+      // Reduced motion: seed cache state, render one static frame.
+      for (let i = 0; i < 16; i++) fireRequest();
+      packets.length = 0;
+      draw();
+    } else {
+      onVisible(card, (vis) => {
+        running = vis;
+        if (vis && !raf) raf = requestAnimationFrame(loop);
+      });
     }
 
     let nextReq = 0;

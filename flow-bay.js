@@ -12,6 +12,7 @@
   host.appendChild(canvas);
   const ctx = canvas.getContext('2d');
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let W = 0, H = 0;
   let regions = {};
@@ -51,7 +52,7 @@
   let clkLevel = 0;
   let phase = 0;
   const HALF_PERIOD_MS = 420;
-  let isPaused = false;
+  let isPaused = REDUCED;
   let stepRequest = false;
   let lastT = performance.now();
   const HIST_MAX = 42;
@@ -460,12 +461,23 @@
       host.style.cursor = newHover ? 'pointer' : 'default';
     }
   }
+  let raf = 0;
+  let visible = false;
   function loop(t) {
-    const dt = t - lastT;
+    raf = 0;
+    if (!visible) return;
+    // Clamp dt so a resume after tab-switch / scroll-away doesn't
+    // fast-forward the counter through dozens of skipped clock edges.
+    const dt = Math.min(t - lastT, 100);
     lastT = t;
     tick(dt);
     render();
-    requestAnimationFrame(loop);
+    raf = requestAnimationFrame(loop);
+  }
+  function startLoop() {
+    if (raf || !visible) return;
+    lastT = performance.now();
+    raf = requestAnimationFrame(loop);
   }
 
   // ─── Mouse ────────────────────────────────────────────────
@@ -510,5 +522,13 @@
   resize();
   reset();
   window.addEventListener('resize', resize);
-  requestAnimationFrame(loop);
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((entries) => {
+      visible = entries[entries.length - 1].isIntersecting;
+      if (visible) startLoop();
+    }, { threshold: 0.05 }).observe(host);
+  } else {
+    visible = true;
+    startLoop();
+  }
 })();
